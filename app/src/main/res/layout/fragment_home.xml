@@ -4,13 +4,393 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <androidx.cardview.widget.CardView
+        android:id="@+id/home_cv"
+        android:layout_width="match_parent"
+        android:layout_height="58dp"
+        android:backgroundTint="#A6A1F7"
+        app:cardCornerRadius="50dp"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        android:text="home"/>
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="20dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp">
 
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/home_cv_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Nov 7, 2025"
+                android:textColor="#FFFFFF"
+                android:textSize="22dp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:layout_marginStart="30dp"
+                android:textStyle="bold"/>
+
+            <ImageView
+                android:id="@+id/home_cv_mypage"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:background="#FFFFFF"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/home_cv_setting"
+                android:layout_marginEnd="30dp"/>
+
+            <ImageView
+                android:id="@+id/home_cv_setting"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:background="#FFFFFF"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:layout_marginEnd="30dp" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.cardview.widget.CardView>
+
+    <FrameLayout
+        android:id="@+id/home_fl1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#A6A1F7"
+        app:layout_constraintTop_toBottomOf="@id/home_cv"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginTop="30dp">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:id="@+id/home_fl1_iv"
+                android:layout_width="55dp"
+                android:layout_height="55dp"
+                android:background="#FFFFFF"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                android:layout_marginTop="30dp"
+                android:layout_marginStart="30dp"/>
+
+            <TextView
+                android:id="@+id/home_fl1_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="정윤님"
+                android:textSize="23dp"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                app:layout_constraintTop_toTopOf="@id/home_fl1_iv"
+                app:layout_constraintStart_toEndOf="@id/home_fl1_iv"
+                app:layout_constraintBottom_toTopOf="@id/home_fl1_room"
+                android:layout_marginStart="25dp"/>
+
+            <TextView
+                android:id="@+id/home_fl1_room"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="250호 멤버"
+                android:textSize="17dp"
+                android:textColor="#E0E0E0"
+                app:layout_constraintBottom_toBottomOf="@id/home_fl1_iv"
+                app:layout_constraintStart_toEndOf="@id/home_fl1_iv"
+                app:layout_constraintTop_toBottomOf="@id/home_fl1_name"
+                android:layout_marginStart="25dp"/>
+
+            <TextView
+                android:id="@+id/home_fl1_tv1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="11월 생활비 현황"
+                android:textColor="#FFFFFF"
+                android:textSize="17dp"
+                android:textStyle="bold"
+                app:layout_constraintTop_toBottomOf="@id/home_fl1_iv"
+                app:layout_constraintStart_toStartOf="parent"
+                android:layout_marginTop="24dp"
+                android:layout_marginStart="30dp"/>
+
+            <TextView
+                android:id="@+id/home_fl1_goal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="500,000원"
+                android:textStyle="bold"
+                android:textSize="17dp"
+                android:textColor="#FFFFFF"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@id/home_fl1_tv1"
+                android:layout_marginEnd="30dp"/>
+
+            <ProgressBar
+                android:id="@+id/home_fl1_pb"
+                android:layout_width="0dp"
+                android:layout_height="10dp"
+                style="?android:attr/progressBarStyleHorizontal"
+                app:layout_constraintTop_toBottomOf="@id/home_fl1_tv1"
+                app:layout_constraintStart_toStartOf="@id/home_fl1_tv1"
+                app:layout_constraintEnd_toEndOf="@id/home_fl1_goal"
+                android:layout_marginTop="7dp"
+                android:progress="35"
+                android:max="100"
+                android:progressDrawable="@drawable/userate_progress_bar"/>
+
+            <TextView
+                android:id="@+id/home_fl1_use_rate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="35% 사용"
+                android:textColor="#E0E0E0"
+                android:textSize="17dp"
+                app:layout_constraintTop_toBottomOf="@id/home_fl1_pb"
+                app:layout_constraintStart_toStartOf="@id/home_fl1_pb"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:layout_marginBottom="25dp"
+                android:layout_marginTop="7dp"/>
+
+            <TextView
+                android:id="@+id/home_fl1_tv2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="잘 절약하는 중이네요! ☺️"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                app:layout_constraintTop_toTopOf="@id/home_fl1_use_rate"
+                app:layout_constraintEnd_toEndOf="@id/home_fl1_pb"
+                android:layout_marginBottom="30dp"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/home_fl2"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="#A6A1F7"
+        app:layout_constraintTop_toBottomOf="@id/home_fl1"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginTop="20dp">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/home_fl2_tv1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="하루 루틴 달성률"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:textSize="20dp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                android:layout_marginTop="25dp"
+                android:layout_marginStart="30dp"/>
+
+            <ProgressBar
+                android:id="@+id/home_fl2_pb"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:background="@drawable/routine_progress_bar_background"
+                android:progressDrawable="@drawable/routine_progress_bar"
+                android:indeterminateOnly="false"
+                android:progress="30"
+                android:max="100"
+                app:layout_constraintTop_toBottomOf="@id/home_fl2_tv1"
+                app:layout_constraintStart_toStartOf="@id/home_fl2_tv1"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:layout_marginTop="15dp"
+                android:layout_marginBottom="25dp"/>
+
+            <TextView
+                android:id="@+id/home_fl2_pb_rate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="30%"
+                android:textSize="24dp"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                app:layout_constraintTop_toTopOf="@id/home_fl2_pb"
+                app:layout_constraintStart_toStartOf="@id/home_fl2_pb"
+                app:layout_constraintEnd_toEndOf="@id/home_fl2_pb"
+                android:layout_marginTop="20dp"/>
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:background="#FFD400"
+                app:layout_constraintBottom_toBottomOf="@id/home_fl2_pb"
+                app:layout_constraintStart_toStartOf="@id/home_fl2_pb"
+                app:layout_constraintEnd_toEndOf="@id/home_fl2_pb"
+                android:layout_marginBottom="20dp"/>
+
+            <TextView
+                android:id="@+id/home_fl2_today"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="오늘 8시까지"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:textSize="17dp"
+                app:layout_constraintStart_toEndOf="@id/home_fl2_pb"
+                app:layout_constraintTop_toTopOf="@id/home_fl2_pb"
+                app:layout_constraintBottom_toTopOf="@id/home_fl2_tv2"
+                android:layout_marginTop="20dp"
+                android:layout_marginStart="25dp"/>
+
+            <TextView
+                android:id="@+id/home_fl2_rate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="17dp"
+                android:textColor="#FFD400"
+                android:textStyle="bold"
+                android:text="30% 달성!"
+                app:layout_constraintStart_toEndOf="@id/home_fl2_today"
+                app:layout_constraintTop_toTopOf="@id/home_fl2_today"
+                android:layout_marginStart="4dp"/>
+
+            <TextView
+                android:id="@+id/home_fl2_tv2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="아직 할 일이 많아요!😢"
+                android:textColor="#E0E0E0"
+                app:layout_constraintStart_toEndOf="@id/home_fl2_pb"
+                app:layout_constraintBottom_toBottomOf="@id/home_fl2_pb"
+                app:layout_constraintTop_toBottomOf="@id/home_fl2_today"
+                android:layout_marginBottom="20dp"
+                android:layout_marginStart="25dp"/>
+
+
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/home_fl3"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="#A6A1F7"
+        app:layout_constraintTop_toBottomOf="@id/home_fl2"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginTop="20dp">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/home_fl3_tv1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="공동 리스트"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:textSize="17dp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/home_fl3_tv2"
+                android:layout_marginTop="25dp"/>
+
+            <TextView
+                android:id="@+id/home_fl3_tv2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="개인 리스트"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:textSize="17dp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@id/home_fl3_tv1"
+                android:layout_marginTop="25dp"/>
+
+            <ImageView
+                android:id="@+id/home_fl3_iv1"
+                android:layout_width="0dp"
+                android:layout_height="2dp"
+                android:background="#FFFFFF"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/home_fl3_iv2"
+                app:layout_constraintTop_toBottomOf="@id/home_fl3_tv1"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="7dp"
+                android:layout_marginEnd="10dp"/>
+
+            <ImageView
+                android:id="@+id/home_fl3_iv2"
+                android:layout_width="0dp"
+                android:layout_height="2dp"
+                android:background="#FFFFFF"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@id/home_fl3_iv1"
+                app:layout_constraintTop_toBottomOf="@id/home_fl3_tv1"
+                android:layout_marginEnd="20dp"
+                android:layout_marginTop="7dp"
+                android:layout_marginStart="10dp"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/home_fl3_rv1"
+                android:layout_width="0dp"
+                android:layout_height="150dp"
+                app:layout_constraintTop_toBottomOf="@id/home_fl3_iv1"
+                app:layout_constraintStart_toStartOf="@id/home_fl3_iv1"
+                app:layout_constraintEnd_toEndOf="@id/home_fl3_iv1"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:layout_marginBottom="20dp"
+                android:layout_marginTop="12dp"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/home_fl3_rv2"
+                android:layout_width="0dp"
+                android:layout_height="150dp"
+                app:layout_constraintTop_toBottomOf="@id/home_fl3_iv2"
+                app:layout_constraintStart_toStartOf="@id/home_fl3_iv2"
+                app:layout_constraintEnd_toEndOf="@id/home_fl3_iv2"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:layout_marginBottom="20dp"
+                android:layout_marginTop="12dp"/>
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/home_fl3_cv"
+                android:layout_width="100dp"
+                android:layout_height="40dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:cardCornerRadius="8dp"
+                android:backgroundTint="#EFEEF9"
+                android:layout_marginBottom="20dp"
+                android:layout_marginEnd="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="☑️ 수정하기"
+                    android:textSize="14dp"
+                    android:textColor="#000000"
+                    android:textStyle="bold"
+                    android:layout_gravity="center"/>
+
+            </androidx.cardview.widget.CardView>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </FrameLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
