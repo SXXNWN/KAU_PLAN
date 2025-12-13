@@ -1,9 +1,11 @@
 package com.example.kau_plan.ui.theme.expense           // 이 파일이 어느 패키지에 속해 있는지 알려주는 코드
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -18,6 +20,7 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,6 +40,20 @@ fun ExpenseListScreen(
     expenses: List<Expense>,        // expenses = 사용한 지출을 보여주는 리스트에서 사용할 지출 데이터 목록
     onAddClick: () -> Unit          // 우측 하단에 위치한 + 버튼을 눌렀을 때 실행할 동작(지출 추가 화면 열기 등), onAddClick은 부모로부터 함수를 파라미터로 받는다
 ) {
+    var keyword by rememberSaveable { mutableStateOf("") }
+    var selectedCategory by rememberSaveable { mutableStateOf("전체") }
+
+    // ✅ 검색/카테고리 필터 적용
+    val filteredExpenses = remember(expenses, keyword, selectedCategory) {
+        expenses.filter { e ->
+            val matchesCategory = (selectedCategory == "전체") || (e.category == selectedCategory)
+            val matchesKeyword = keyword.isBlank() ||
+                    e.title.contains(keyword, ignoreCase = true) ||
+                    e.category.contains(keyword, ignoreCase = true)
+            matchesCategory && matchesKeyword
+        }
+    }
+
     Scaffold(
         floatingActionButton = {                            // 우측 하단에 떠 있는 + 버튼을 정의하는 부분
             FloatingActionButton(                           // 실제로 동그란 버튼에 해당하는 FAB를 생성하는 Composable 함수
@@ -62,13 +79,19 @@ fun ExpenseListScreen(
                 monthlyGoal = monthlyGoal
             )
 
-            Spacer(modifier = Modifier.height(16.dp))   // 위/아래 컴포넌트 사이에 16dp의 빈공간을 넣는 코드
+            Spacer(modifier = Modifier.height(13.dp))   // 위/아래 컴포넌트 사이에 16dp의 빈공간을 넣는 코드
 
-            SearchAndCategoryRow()                          // 검색 창과 카테고리 버튼들을 화면에 그리는 Composable 함수 호출
+            SearchAndCategoryRow(       // 검색 창과 카테고리 버튼들을 화면에 그리는 Composable 함수 호출
+
+                keyword = keyword,
+                onKeywordChange = { keyword = it },
+                selectedCategory = selectedCategory,
+                onCategorySelected = { selectedCategory = it }
+            )
 
             Spacer(modifier = Modifier.height(12.dp))   // 위/아래 컴포넌트 사이에 12dp의 빈 공간을 넣는 코드
 
-            ExpenseList(expenses = expenses)                // 카테고리 버튼 아래에 있는 지출 목록을 화면에 출력하는 Composable 함수 호출
+            ExpenseList(expenses = filteredExpenses)                // 카테고리 버튼 아래에 있는 지출 목록을 화면에 출력하는 Composable 함수 호출
         }
     }
 }
@@ -150,38 +173,65 @@ fun MonthlySummaryCard(             // 소비내역 페이지의 최상단에 �
 // 3) 검색창 + 카테고리 칩 줄
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchAndCategoryRow() {                                            // 지출 검색창과 카테고리 종류를 화면에 표시하는 Composable 함수
-    var keyword by remember { mutableStateOf("") }               // keyword = 검색창에 입력한 키워드를 저장하는 상태 변수
-    var selectedCategory by remember { mutableStateOf("전체") }
-
+fun SearchAndCategoryRow(
+    keyword: String,
+    onKeywordChange: (String) -> Unit,
+    selectedCategory: String,
+    onCategorySelected: (String) -> Unit
+) {                                            // 지출 검색창과 카테고리 종류를 화면에 표시하는 Composable 함수
     Column {
         OutlinedTextField(
             value = keyword,
-            onValueChange = { keyword = it },
+            onValueChange = onKeywordChange,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 4.dp),
             singleLine = true,
-            placeholder = { Text("항목명 또는 카테고리를 검색") }
+            placeholder = { Text("항목명 검색") }
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(7.dp))
 
         val categories = listOf("전체", "식비", "생활용품", "교통비", "구독", "취미생활", "기타")
 
+        // ✅ 가로 스크롤 상태 (카테고리 칩이 화면 밖으로 넘어가면 좌우로 스크롤 가능)
+        val chipScrollState = rememberScrollState()
+
         Row(
-            horizontalArrangement = Arrangement.spacedBy(3.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(chipScrollState)
+                .padding(horizontal = 2.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             categories.forEach { category ->
                 val selected = category == selectedCategory
                 AssistChip(
-                    onClick = { selectedCategory = category },
-                    label = { Text(category, fontSize = 12.sp) },
+                    modifier = Modifier.height(28.dp),
+                    onClick = { onCategorySelected(category) },
+                    label = {
+                        Text(
+                            text = category,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(horizontal = 0.dp, vertical = 0.dp)
+                        )
+                            },
                     colors = AssistChipDefaults.assistChipColors(
                         containerColor = if (selected) Color(0xFF6B4DFF) else Color(0xFFF2F2F2),
                         labelColor = if (selected) Color.White else Color.DarkGray
-                    )
+                    ),
+                    border = null
                 )
+
+
+            //                AssistChip(
+//                    onClick = { selectedCategory = category },
+//                    label = { Text(category, fontSize = 9.sp) },
+//                    colors = AssistChipDefaults.assistChipColors(
+//                        containerColor = if (selected) Color(0xFF6B4DFF) else Color(0xFFF2F2F2),
+//                        labelColor = if (selected) Color.White else Color.DarkGray
+//                    )
+//                )
             }
         }
     }

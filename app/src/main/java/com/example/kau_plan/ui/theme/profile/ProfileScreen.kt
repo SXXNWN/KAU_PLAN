@@ -3,6 +3,8 @@ package com.example.kau_plan.ui.theme.profile
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,6 +17,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -25,7 +28,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(
+    monthlyTotal: Int,
+    expenses: List<com.example.kau_plan.data.Expense>
+) {
     // 스크롤 가능한 전체 레이아웃
     Column(
         modifier = Modifier
@@ -39,19 +45,25 @@ fun ProfileScreen() {
         ProfileHeaderCard(
             userName = "정윤님",
             roomInfo = "250호 멤버",
-            monthlyExpense = 199_000,
+            monthlyExpense = monthlyTotal,
             routineRate = 83
         )
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // 월별 생활비
-        MonthlySpendingSection()
+        // 월별 생활비 (expenses 기준)
+        val monthlyTotals = remember(expenses) {
+            computeMonthlyTotals(expenses)
+        }
+        MonthlySpendingSection(monthlyTotals = monthlyTotals)
 
         Spacer(modifier = Modifier.height(12.dp))
 
         // 카테고리별 지출
-        CategorySpendingSection()
+        val categoryTotals = remember(expenses) {
+            computeCategoryTotals(expenses)
+        }
+        CategorySpendingSection(categoryTotals = categoryTotals)
 
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -61,7 +73,12 @@ fun ProfileScreen() {
         Spacer(modifier = Modifier.height(12.dp))
 
         // 최근 활동
-        RecentActivitySection()
+        val recentExpenses = remember(expenses) {
+            expenses
+                .sortedByDescending { it.date }
+                .take(4)
+        }
+        RecentActivitySection(recentExpenses = recentExpenses)
     }
 }
 
@@ -178,36 +195,52 @@ private fun ProfileHeaderCard(
 }
 
 @Composable
-private fun MonthlySpendingSection() {
+private fun MonthlySpendingSection(
+    monthlyTotals: Map<Int, Int>
+) {
     SectionCard(
         title = "월별 생활비",
         iconEmoji = "📉"
     ) {
-        // 간단한 바 차트 모양 (예시용)
-        val months = listOf("6월", "7월", "8월", "9월", "10월", "11월")
-        val values = listOf(60, 120, 90, 150, 80, 130)
+        val months = (1..12).toList()
+        val values = months.map { month -> monthlyTotals[month] ?: 0 }
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(140.dp),
+        val chartHeight = 120.dp
+        val maxValue = values.maxOrNull() ?: 0
+
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.Bottom,
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(horizontal = 8.dp)
         ) {
-            values.forEachIndexed { index, value ->
+            items(months) { month ->
+                val value = monthlyTotals[month] ?: 0
+                val ratio = if (maxValue == 0) 0f else value.toFloat() / maxValue
+                val barHeight = (120 * ratio).dp
+
                 Column(
+                    modifier = Modifier.width(44.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Bottom
                 ) {
                     Box(
                         modifier = Modifier
-                            .width(18.dp)
-                            .height(value.dp)
-                            .background(Color(0xFF6B4DFF), RoundedCornerShape(6.dp))
-                    )
+                            .height(chartHeight)
+                            .fillMaxWidth(),
+                        contentAlignment = Alignment.BottomCenter
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(0.55f) // 막대 두께
+                                .height(barHeight)
+                                .background(Color(0xFF6B4DFF), RoundedCornerShape(6.dp))
+                        )
+                    }
+
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = months[index],
+                        text = "${month}월",
                         fontSize = 10.sp,
                         color = Color.DarkGray
                     )
@@ -218,7 +251,9 @@ private fun MonthlySpendingSection() {
 }
 
 @Composable
-private fun CategorySpendingSection() {
+private fun CategorySpendingSection(
+    categoryTotals: Map<String, Int>
+) {
     SectionCard(
         title = "카테고리별 지출",
         iconEmoji = "📅"
@@ -234,43 +269,56 @@ private fun CategorySpendingSection() {
                 contentAlignment = Alignment.Center
             ) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
-                    // 아주 간단한 색 영역 분할 (실제 비율 계산 X, 그냥 느낌용)
-                    val colors = listOf(
-                        Color(0xFF4E7EFF),
-                        Color(0xFFFF8A80),
-                        Color(0xFFFFC107),
-                        Color(0xFF8BC34A),
-                        Color(0xFF9C27B0),
-                        Color(0xFF26C6DA)
-                    )
+                    val total = categoryTotals.values.sum().toFloat()
                     var startAngle = -90f
-                    val sweep = 360f / colors.size
 
-                    colors.forEach { c ->
+                    val colorMap = mapOf(
+                        "식비" to Color(0xFF4E7EFF),
+                        "생활용품" to Color(0xFFFF8A80),
+                        "교통비" to Color(0xFFFFC107),
+                        "구독" to Color(0xFF8BC34A),
+                        "취미생활" to Color(0xFF9C27B0),
+                        "기타" to Color(0xFF26C6DA)
+                    )
+
+                    categoryTotals.forEach { (category, amount) ->
+                        val sweepAngle = if (total == 0f) 0f else (amount / total) * 360f
+                        val color = colorMap[category] ?: Color.LightGray
                         drawArc(
-                            color = c,
+                            color = color,
                             startAngle = startAngle,
-                            sweepAngle = sweep,
+                            sweepAngle = sweepAngle,
                             useCenter = true
                         )
-                        startAngle += sweep
+                        startAngle += sweepAngle
                     }
                 }
             }
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            // 오른쪽: 범례 + 금액 리스트 (더미 데이터)
+            // 오른쪽: 범례 + 금액 리스트 (실제 데이터)
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                CategoryLegendRow("식비", "85,000원", Color(0xFF4E7EFF))
-                CategoryLegendRow("생활용품", "56,000원", Color(0xFFFF8A80))
-                CategoryLegendRow("교통비", "48,000원", Color(0xFFFFC107))
-                CategoryLegendRow("구독", "24,000원", Color(0xFF8BC34A))
-                CategoryLegendRow("취미생활", "97,000원", Color(0xFF9C27B0))
-                CategoryLegendRow("기타", "42,000원", Color(0xFF26C6DA))
+                categoryTotals.forEach { (category, amount) ->
+                    val color = when (category) {
+                        "식비" -> Color(0xFF4E7EFF)
+                        "생활용품" -> Color(0xFFFF8A80)
+                        "교통비" -> Color(0xFFFFC107)
+                        "구독" -> Color(0xFF8BC34A)
+                        "취미생활" -> Color(0xFF9C27B0)
+                        "기타" -> Color(0xFF26C6DA)
+                        else -> Color.Gray
+                    }
+
+                    CategoryLegendRow(
+                        name = category,
+                        amount = "%,d원".format(amount),
+                        color = color
+                    )
+                }
             }
         }
     }
@@ -343,7 +391,9 @@ private fun WeeklyRoutineSection() {
 }
 
 @Composable
-private fun RecentActivitySection() {
+private fun RecentActivitySection(
+    recentExpenses: List<com.example.kau_plan.data.Expense>
+) {
     SectionCard(
         title = "최근 활동",
         iconEmoji = "📝"
@@ -351,10 +401,19 @@ private fun RecentActivitySection() {
         Column(
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Text("• 11/10  치킨 배달비 24,000원", fontSize = 12.sp)
-            Text("• 11/09  세제 구입 12,000원", fontSize = 12.sp)
-            Text("• 11/07  택시비 10,050원", fontSize = 12.sp)
-            Text("• 11/06  OTT 구독료 15,550원", fontSize = 12.sp)
+            if (recentExpenses.isEmpty()) {
+                Text(
+                    text = "최근 지출 내역이 없습니다.",
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+            }
+            recentExpenses.forEach { expense ->
+                Text(
+                    text = "• ${expense.date}  ${expense.title} ${"%,d원".format(expense.amount)}",
+                    fontSize = 12.sp
+                )
+            }
         }
     }
 }
@@ -400,8 +459,44 @@ private fun SectionCard(
     }
 }
 
+private fun computeMonthlyTotals(
+    expenses: List<com.example.kau_plan.data.Expense>
+): Map<Int, Int> {
+    return expenses.groupBy { expense ->
+        // date format: yyyy.MM.dd (e.g., 2025.12.04)
+        expense.date.split(".")[1].toInt()
+    }.mapValues { entry ->
+        entry.value.sumOf { it.amount }
+    }
+}
+
+private fun computeCategoryTotals(
+    expenses: List<com.example.kau_plan.data.Expense>
+): Map<String, Int> {
+    return expenses.groupBy { it.category }
+        .mapValues { entry -> entry.value.sumOf { it.amount } }
+}
+
 @Preview(showBackground = true)
 @Composable
 fun ProfileScreenPreview() {
-    ProfileScreen()
+    ProfileScreen(
+        monthlyTotal = 199_000,
+        expenses = listOf(
+            com.example.kau_plan.data.Expense(
+                title = "치킨",
+                category = "식비",
+                payer = "정윤님",
+                date = "2025.11.09",
+                amount = 24000
+            ),
+            com.example.kau_plan.data.Expense(
+                title = "세제",
+                category = "생활용품",
+                payer = "정윤님",
+                date = "2025.12.04",
+                amount = 12000
+            )
+        )
+    )
 }

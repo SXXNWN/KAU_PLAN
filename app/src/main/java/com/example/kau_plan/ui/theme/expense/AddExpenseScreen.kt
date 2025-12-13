@@ -3,6 +3,7 @@ package com.example.kau_plan.ui.theme.expense
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedButton
@@ -34,7 +35,7 @@ fun AddExpenseScreen(
     var date by remember { mutableStateOf("") }           // 날짜 (간단히 문자열로 입력)
     var memo by remember { mutableStateOf("") }           // 메모
 
-    val categories = listOf("식비", "생활용품", "교통비", "구독", "취미생활", "기타")
+    val categories = listOf("식비", "생활용품", "교통비", "구독", "취미생활", "기타") // 소비내역 화면 카테고리(필터용 "전체" 제외)
     val payers = listOf("정윤님", "지환님", "세현님", "현우님")
 
     // 화면이 작아지거나 키보드가 올라와도 스크롤 가능하도록 세로 스크롤 추가
@@ -76,16 +77,24 @@ fun AddExpenseScreen(
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold
         )
+        val categoryScroll = rememberScrollState()
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(categoryScroll)        ) {
             categories.forEach { category ->
                 val selected = category == selectedCategory
                 AssistChip(
+                    modifier = Modifier.height(24.dp),
                     onClick = { selectedCategory = category },
-                    label = { Text(category, fontSize = 12.sp) },
-                    colors = AssistChipDefaults.assistChipColors(
+                    label = {
+                        Text(
+                            text = category,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 0.dp)
+                        )
+                    },                    colors = AssistChipDefaults.assistChipColors(
                         containerColor = if (selected) Color(0xFF6B4DFF) else Color(0xFFF2F2F2),
                         labelColor = if (selected) Color.White else Color.DarkGray
                     )
