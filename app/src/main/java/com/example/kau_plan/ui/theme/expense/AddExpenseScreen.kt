@@ -12,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -24,36 +25,51 @@ import com.example.kau_plan.data.Expense
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddExpenseScreen(
-    onSaveClick: (Expense) -> Unit,      // 저장 버튼 눌렀을 때 호출할 함수 (부모에서 전달)
-    onCancelClick: () -> Unit           // 취소 버튼 눌렀을 때 호출할 함수 (부모에서 전달)
+    expenseToEdit: Expense? = null,
+    onSaveClick: (Expense) -> Unit,
+    onCancelClick: () -> Unit
 ) {
-    // 🔹 1) 각 입력 칸에 대응되는 상태 변수들
-    var title by remember { mutableStateOf("") }          // 항목명
-    var amountText by remember { mutableStateOf("") }     // 금액 (문자열로 입력받고 나중에 Int로 변환)
-    var selectedCategory by remember { mutableStateOf("식비") } // 선택된 카테고리
-    var selectedPayer by remember { mutableStateOf("정윤님") }  // 선택된 결제자
-    var date by remember { mutableStateOf("") }           // 날짜 (간단히 문자열로 입력)
-    var memo by remember { mutableStateOf("") }           // 메모
+    var title by rememberSaveable { mutableStateOf("") }
+    var amountText by rememberSaveable { mutableStateOf("") }
+    var selectedCategory by rememberSaveable { mutableStateOf("식비") }
+    var selectedPayer by rememberSaveable { mutableStateOf("정윤님") }
+    var date by rememberSaveable { mutableStateOf("") }
+    var memo by rememberSaveable { mutableStateOf("") }
 
-    val categories = listOf("식비", "생활용품", "교통비", "구독", "취미생활", "기타") // 소비내역 화면 카테고리(필터용 "전체" 제외)
+    LaunchedEffect(expenseToEdit?.id) {
+        if (expenseToEdit != null) {
+            title = expenseToEdit.title
+            amountText = expenseToEdit.amount.toString()
+            selectedCategory = expenseToEdit.category
+            selectedPayer = expenseToEdit.payer
+            date = expenseToEdit.date
+        } else {
+            title = ""
+            amountText = ""
+            selectedCategory = "식비"
+            selectedPayer = "정윤님"
+            date = ""
+            memo = ""
+        }
+    }
+
+    val categories = listOf("식비", "생활용품", "교통비", "구독", "취미생활", "기타")
     val payers = listOf("정윤님", "지환님", "세현님", "현우님")
+    val isEditMode = expenseToEdit != null
 
-    // 화면이 작아지거나 키보드가 올라와도 스크롤 가능하도록 세로 스크롤 추가
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
-            .verticalScroll(rememberScrollState()),   // 세로 방향 스크롤 가능
-        verticalArrangement = Arrangement.spacedBy(12.dp) // 각 요소 사이 간격 12dp
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // 🔹 화면 제목
         Text(
-            text = "지출 추가",
+            text = if (isEditMode) "지출 수정" else "지출 추가",
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold
         )
 
-        // 🔹 항목명 입력
         OutlinedTextField(
             value = title,
             onValueChange = { title = it },
@@ -62,7 +78,6 @@ fun AddExpenseScreen(
             singleLine = true
         )
 
-        // 🔹 금액 입력
         OutlinedTextField(
             value = amountText,
             onValueChange = { amountText = it },
@@ -71,18 +86,19 @@ fun AddExpenseScreen(
             singleLine = true
         )
 
-        // 🔹 카테고리 선택
         Text(
             text = "카테고리",
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold
         )
+
         val categoryScroll = rememberScrollState()
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier
                 .fillMaxWidth()
-                .horizontalScroll(categoryScroll)        ) {
+                .horizontalScroll(categoryScroll)
+        ) {
             categories.forEach { category ->
                 val selected = category == selectedCategory
                 AssistChip(
@@ -92,9 +108,10 @@ fun AddExpenseScreen(
                         Text(
                             text = category,
                             fontSize = 12.sp,
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 0.dp)
+                            modifier = Modifier.padding(horizontal = 4.dp)
                         )
-                    },                    colors = AssistChipDefaults.assistChipColors(
+                    },
+                    colors = AssistChipDefaults.assistChipColors(
                         containerColor = if (selected) Color(0xFF6B4DFF) else Color(0xFFF2F2F2),
                         labelColor = if (selected) Color.White else Color.DarkGray
                     )
@@ -102,12 +119,12 @@ fun AddExpenseScreen(
             }
         }
 
-        // 🔹 결제자 선택
         Text(
             text = "결제자",
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold
         )
+
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.fillMaxWidth()
@@ -125,7 +142,6 @@ fun AddExpenseScreen(
             }
         }
 
-        // 🔹 날짜 입력
         OutlinedTextField(
             value = date,
             onValueChange = { date = it },
@@ -134,7 +150,6 @@ fun AddExpenseScreen(
             singleLine = true
         )
 
-        // 🔹 메모 입력
         OutlinedTextField(
             value = memo,
             onValueChange = { memo = it },
@@ -146,13 +161,11 @@ fun AddExpenseScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 🔹 하단 취소 / 저장 버튼 행
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 취소 버튼
             OutlinedButton(
                 onClick = onCancelClick,
                 modifier = Modifier.weight(1f)
@@ -160,26 +173,22 @@ fun AddExpenseScreen(
                 Text("취소")
             }
 
-            // 저장 버튼
             Button(
                 onClick = {
-                    // amountText를 Int로 변환 (숫자가 아니면 0으로 처리)
                     val amount = amountText.toIntOrNull() ?: 0
-
-                    // Expense 객체 생성
                     val expense = Expense(
                         title = title,
                         category = selectedCategory,
                         payer = selectedPayer,
                         date = date,
-                        amount = amount
+                        amount = amount,
+                        id = expenseToEdit?.id ?: ""
                     )
-
                     onSaveClick(expense)
                 },
                 modifier = Modifier.weight(1f)
             ) {
-                Text("저장")
+                Text(if (isEditMode) "수정" else "저장")
             }
         }
     }
@@ -189,7 +198,8 @@ fun AddExpenseScreen(
 @Composable
 fun AddExpenseScreenPreview() {
     AddExpenseScreen(
-        onSaveClick = {},        // 미리보기니까 비워둠
-        onCancelClick = {}       // 미리보기니까 비워둠
+        expenseToEdit = null,
+        onSaveClick = {},
+        onCancelClick = {}
     )
 }
