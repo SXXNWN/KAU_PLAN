@@ -63,10 +63,6 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        WeeklyRoutineSection()
-
-        Spacer(modifier = Modifier.height(12.dp))
-
         val recentExpenses = remember(expenses) {
             expenses
                 .sortedByDescending { it.date }
@@ -336,45 +332,6 @@ private fun CategoryLegendRow(
             text = amount,
             fontSize = 12.sp
         )
-    }
-}
-
-@Composable
-private fun WeeklyRoutineSection() {
-    SectionCard(
-        title = "주간 루틴 달성률",
-        iconEmoji = "🏁"
-    ) {
-        val days = listOf("월", "화", "수", "목", "금", "토", "일")
-        val values = listOf(90, 80, 70, 50, 40, 30, 20)
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(140.dp),
-            verticalAlignment = Alignment.Bottom,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            values.forEachIndexed { index, value ->
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Bottom
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .width(18.dp)
-                            .height(value.dp)
-                            .background(Color(0xFF5E8C5A), RoundedCornerShape(6.dp))
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = days[index],
-                        fontSize = 10.sp,
-                        color = Color.DarkGray
-                    )
-                }
-            }
-        }
     }
 }
 

@@ -36,6 +36,7 @@ fun AddExpenseScreen(
     var date by rememberSaveable { mutableStateOf("") }
     var memo by rememberSaveable { mutableStateOf("") }
 
+
     LaunchedEffect(expenseToEdit?.id) {
         if (expenseToEdit != null) {
             title = expenseToEdit.title

@@ -318,7 +318,7 @@ fun ExpenseItem(
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconButton(onClick = onEditClick) {
+                        IconButton(onClick = onEditClick) {     // 수정 버튼을 누르면 onEditClick 콜백 호출
                             Icon(
                                 imageVector = Icons.Default.Edit,
                                 contentDescription = "지출 수정"

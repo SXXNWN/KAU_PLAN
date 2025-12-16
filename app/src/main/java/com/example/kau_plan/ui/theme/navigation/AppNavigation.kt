@@ -35,7 +35,7 @@ fun AppNavigation(
                     navController.navigate("add_expense")
                 },
                 onEditClick = { expense ->
-                    navController.navigate("add_expense?expenseId=${expense.id}")
+                    navController.navigate("add_expense?expenseId=${expense.id}")   // 수정 아이콘을 누르면 콜백 함수가 expense를 전달함
                 },
                 onDeleteClick = { expense ->
                     viewModel.deleteExpense(expense.id)
@@ -44,6 +44,7 @@ fun AppNavigation(
         }
 
         composable(
+            // 지출 추가와 수정 모두 동일한 화면 사용, expenseId가 있으면 수정, 없으면 추가
             route = "add_expense?expenseId={expenseId}",
             arguments = listOf(
                 navArgument("expenseId") {
@@ -59,9 +60,9 @@ fun AppNavigation(
             AddExpenseScreen(
                 expenseToEdit = expenseToEdit,
                 onSaveClick = { expense: Expense ->
-                    if (expense.id.isBlank()) {
+                    if (expense.id.isBlank()) {         // expense.id가 비어 있다면 지출 추가
                         viewModel.addExpense(expense)
-                    } else {
+                    } else {                            // expense.id가 있다면 지출 수정
                         viewModel.updateExpense(expense)
                     }
                     navController.popBackStack()
