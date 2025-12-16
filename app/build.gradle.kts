@@ -63,6 +63,7 @@ dependencies {
 
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
+    implementation(libs.androidx.material.icons.extended.android)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

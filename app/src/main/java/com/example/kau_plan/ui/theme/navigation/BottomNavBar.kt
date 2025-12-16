@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.compose.material3.Icon
+import androidx.navigation.NavGraph.Companion.findStartDestination
 
 @Composable
 fun BottomNavBar(navController: NavController) {
