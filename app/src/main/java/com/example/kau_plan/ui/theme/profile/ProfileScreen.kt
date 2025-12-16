@@ -32,16 +32,14 @@ fun ProfileScreen(
     monthlyTotal: Int,
     expenses: List<com.example.kau_plan.data.Expense>
 ) {
-    // 스크롤 가능한 전체 레이아웃
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFFDF5F7))   // 배경 연한 핑크
+            .background(Color(0xFFFDF5F7))
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
 
-        // 상단 프로필 카드
         ProfileHeaderCard(
             userName = "정윤님",
             roomInfo = "250호 멤버",
@@ -51,7 +49,6 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // 월별 생활비 (expenses 기준)
         val monthlyTotals = remember(expenses) {
             computeMonthlyTotals(expenses)
         }
@@ -59,7 +56,6 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // 카테고리별 지출
         val categoryTotals = remember(expenses) {
             computeCategoryTotals(expenses)
         }
@@ -67,12 +63,10 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // 주간 루틴 달성률
         WeeklyRoutineSection()
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // 최근 활동
         val recentExpenses = remember(expenses) {
             expenses
                 .sortedByDescending { it.date }
@@ -102,12 +96,10 @@ private fun ProfileHeaderCard(
                 .fillMaxWidth()
                 .padding(20.dp)
         ) {
-            // 상단: 프로필 사진 + 이름 + 설정 아이콘
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // 동그란 프로필 자리
                 Box(
                     modifier = Modifier
                         .size(56.dp)
@@ -145,7 +137,6 @@ private fun ProfileHeaderCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 가운데 구분선
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -155,7 +146,6 @@ private fun ProfileHeaderCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 하단: 이번 달 지출 / 루틴 달성률
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -232,7 +222,7 @@ private fun MonthlySpendingSection(
                     ) {
                         Box(
                             modifier = Modifier
-                                .fillMaxWidth(0.55f) // 막대 두께
+                                .fillMaxWidth(0.55f)
                                 .height(barHeight)
                                 .background(Color(0xFF6B4DFF), RoundedCornerShape(6.dp))
                         )
@@ -262,7 +252,6 @@ private fun CategorySpendingSection(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // 왼쪽: 간단한 도넛/파이 느낌의 원형 그래프 자리
             Box(
                 modifier = Modifier
                     .size(120.dp),
@@ -297,7 +286,6 @@ private fun CategorySpendingSection(
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            // 오른쪽: 범례 + 금액 리스트 (실제 데이터)
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
