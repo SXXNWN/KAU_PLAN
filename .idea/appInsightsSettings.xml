@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.example.kau_plan" />
+                  <option name="mobileSdkAppId" value="1:97733297614:android:b8e6f54da65af5b862979f" />
+                  <option name="projectId" value="kau-plan" />
+                  <option name="projectNumber" value="97733297614" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

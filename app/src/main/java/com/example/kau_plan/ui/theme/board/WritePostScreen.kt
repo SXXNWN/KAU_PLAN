@@ -1,5 +1,6 @@
 package com.example.kau_plan.ui.theme.board
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -8,11 +9,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.add
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -26,6 +30,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -48,6 +53,10 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.kau_plan.ui.theme.BoardBackground
 import com.example.kau_plan.ui.theme.BoardPrimary
+import com.example.kau_plan.ui.theme.board.PostStatus
+import com.google.firebase.Firebase
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.firestore
 
 // 테두리 색상을 일관되게 관리하기 위해 변수 추가
 val inputBorderColor = Color.LightGray.copy(alpha = 0.7f)
@@ -58,6 +67,8 @@ fun WritePostScreen(navController: NavController) {
     var content by remember { mutableStateOf(TextFieldValue("")) }
     val categories = listOf("헬스", "식사", "공부", "기타")
     var selectedCategory by remember { mutableStateOf(categories.first()) }
+    var selectedStatus by remember { mutableStateOf(PostStatus.RECRUITING) } // 모집 상태 추가
+    var isUploading by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = { WritePostTopAppBar(navController) }, // NavController 전달
@@ -87,6 +98,18 @@ fun WritePostScreen(navController: NavController) {
                     )
                 }
                 item {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("모집 상태: ", fontWeight = FontWeight.Bold)
+                        Row {
+                            RadioButton(selected = selectedStatus == PostStatus.RECRUITING, onClick = { selectedStatus = PostStatus.RECRUITING })
+                            Text("모집중", modifier = Modifier.align(Alignment.CenterVertically))
+                            Spacer(modifier = Modifier.width(16.dp))
+                            RadioButton(selected = selectedStatus == PostStatus.COMPLETED, onClick = { selectedStatus = PostStatus.COMPLETED })
+                            Text("모집완료", modifier = Modifier.align(Alignment.CenterVertically))
+                        }
+                    }
+                }
+                item {
                     InputSection(
                         label = "내용",
                         value = content,
@@ -102,8 +125,29 @@ fun WritePostScreen(navController: NavController) {
                 item {
                     Button(
                         onClick = {
-                            // 글 등록 로직 후 뒤로가기
-                            navController.popBackStack()
+                            if (title.text.isNotBlank() && content.text.isNotBlank() && !isUploading) {
+                                isUploading = true
+                                val newPost = hashMapOf(
+                                    "title" to title.text,
+                                    "content" to content.text,
+                                    "category" to selectedCategory,
+                                    "status" to selectedStatus.name, // enum의 이름을 String으로 저장
+                                    "authorId" to "user123", // TODO: 실제 사용자 ID로 교체
+                                    "authorName" to "익명", // TODO: 실제 사용자 이름으로 교체
+                                    "createdAt" to FieldValue.serverTimestamp(),
+                                    "imageUrl" to null,
+                                    "commentCount" to 0
+                                )
+                                Firebase.firestore.collection("posts").add(newPost)
+                                    .addOnSuccessListener {
+                                        isUploading = false
+                                        navController.popBackStack()
+                                    }
+                                    .addOnFailureListener { e ->
+                                        isUploading = false
+                                        Log.w("WritePostScreen", "Error writing post", e)
+                                    }
+                            }
                         },
                         modifier = Modifier
                             .fillMaxWidth()

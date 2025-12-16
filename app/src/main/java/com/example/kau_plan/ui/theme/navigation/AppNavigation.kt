@@ -15,6 +15,8 @@ import com.example.kau_plan.data.Expense
 import com.example.kau_plan.ui.theme.expense.AddExpenseScreen
 import com.example.kau_plan.ui.theme.expense.ExpenseListScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.example.kau_plan.ui.theme.board.BoardScreen
 import com.example.kau_plan.ui.theme.board.PostDetailScreen
 import com.example.kau_plan.ui.theme.expense.ExpenseViewModel
@@ -76,24 +78,36 @@ fun AppNavigation(
             )
         }
 
+        // 1. HomeScreen: BottomNavItem을 사용하도록 명시적으로 변경
         composable(BottomNavItem.Home.route) {
             HomeScreen(
                 navController = navController
             )
         }
 
-        composable(route = "board") {
+        // 2. BoardScreen: BottomNavItem을 사용하도록 변경
+        composable(BottomNavItem.Board.route) {
             BoardScreen(
                 navController = navController
             )
         }
 
-        composable("postDetail") {
-            PostDetailScreen(navController = navController)
+        // 3. WritePostScreen: 라우트 이름을 일관성 있게 'write_post'로 변경
+        composable("write_post") {
+            WritePostScreen(navController = navController)
         }
 
-        composable("writePost") {
-            WritePostScreen(navController = navController)
+        // 4. PostDetailScreen: 기존 구조 유지 (문제 없음)
+        composable(
+            route = "post_detail/{postId}",
+            arguments = listOf(navArgument("postId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val postId = backStackEntry.arguments?.getString("postId")
+            if (postId != null) {
+                PostDetailScreen(navController, postId = postId)
+            } else {
+                navController.popBackStack()
+            }
         }
 
         // 🔹 프로필 화면

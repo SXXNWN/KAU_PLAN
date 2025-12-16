@@ -1,5 +1,7 @@
 package com.example.kau_plan.ui.theme.board
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -29,105 +32,195 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.rememberNavController
-import com.example.kau_plan.ui.theme.DetailCardBackground
-import com.example.kau_plan.ui.theme.DetailSubTextColor
+import coil.compose.AsyncImage
 import com.example.kau_plan.ui.theme.BoardBackground
 import com.example.kau_plan.ui.theme.BoardPrimary
+import com.example.kau_plan.ui.theme.DetailCardBackground
+import com.example.kau_plan.ui.theme.DetailSubTextColor
+import com.example.kau_plan.ui.theme.navigation.BottomNavItem
+import com.google.firebase.Timestamp
+import java.text.SimpleDateFormat
+import java.util.Locale
 
-
+/**
+ * 게시글 상세 화면 Composable
+ *
+ * - 선택된 게시글의 상세 정보 표시
+ * - 댓글 목록 조회 및 표시
+ * - 댓글 작성 입력 처리
+ */
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun PostDetailScreen(navController: NavController) {
+fun PostDetailScreen(
+    navController: NavController,
+    postId: String,
+    viewModel: PostDetailViewModel = viewModel()
+) {
+    // 게시글 상세 데이터 상태
+    val post by viewModel.post.collectAsState()
+
+    // 해당 게시글의 댓글 목록 상태
+    val comments by viewModel.comments.collectAsState()
+
+    // 댓글 입력창에 입력 중인 텍스트 상태
+    var newCommentText by remember { mutableStateOf("") }
+
+    /**
+     * postId가 전달되었을 때
+     * 게시글 상세 정보와 댓글 목록을 함께 조회한다.
+     */
+    LaunchedEffect(postId) {
+        if (postId.isNotBlank()) {
+            viewModel.fetchPostAndComments(postId)
+        }
+    }
+
     Scaffold(
-        // topBar를 제거하고 LazyColumn 안으로 이동
-        bottomBar = { CommentInputField() },
+        // 상단 앱바 (뒤로가기, 프로필, 설정)
+        topBar = { DetailTopAppBar(navController = navController) },
+
+        // 하단 댓글 입력 영역
+        bottomBar = {
+            CommentInputField(
+                value = newCommentText,
+                onValueChange = { newCommentText = it },
+                onSendClick = {
+                    viewModel.addComment(postId, newCommentText)
+                    newCommentText = ""
+                }
+            )
+        },
         containerColor = BoardBackground
     ) { innerPadding ->
+
+        // 게시글 내용 + 댓글을 하나의 스크롤 영역으로 구성
         LazyColumn(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            // BoardScreen과 동일하게 horizontal만 설정
-            contentPadding = PaddingValues(horizontal = 16.dp),
+                .padding(innerPadding)
+                .fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // 헤더를 첫 번째 아이템으로 배치하고 위쪽에 여백 추가
+
+            // 게시글 본문 영역
             item {
-                Spacer(modifier = Modifier.height(8.dp))
-                DetailTopAppBar(navController)
+                post?.let { PostContent(post = it) }
             }
-            // 게시물 본문
+
+            // 댓글 개수 표시
             item {
-                PostContent()
+                Text(
+                    "댓글 ${comments.size}",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                )
             }
-            // 댓글 작성자 정보
-            item {
-                CommenterProfile()
-            }
+
             // 댓글 목록
-            item {
-                Comment()
+            items(comments, key = { it.id }) { comment ->
+                CommentItem(comment = comment)
             }
         }
     }
 }
 
+/**
+ * 게시글 상세 화면 상단 앱바
+ *
+ * - 뒤로가기 버튼
+ * - 게시판 제목
+ * - 프로필 / 설정 이동 버튼
+ */
 @Composable
 fun DetailTopAppBar(navController: NavController) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            // BoardScreen의 헤더와 동일한 모양과 패딩 적용
-            .clip(CircleShape)
-            .background(BoardPrimary)
-            .padding(horizontal = 20.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        IconButton(onClick = { navController.popBackStack() }, modifier = Modifier.size(24.dp)) { // 뒤로가기 기능
-            Icon(Icons.Default.ArrowBackIosNew, contentDescription = "뒤로가기", tint = Color.White)
+        IconButton(
+            onClick = { navController.popBackStack() },
+            modifier = Modifier.size(24.dp)
+        ) {
+            Icon(
+                Icons.Default.ArrowBackIosNew,
+                contentDescription = "뒤로가기",
+                tint = Color.DarkGray
+            )
         }
-        Text("게시판", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+
+        Text(
+            "게시판",
+            color = Color.DarkGray,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold
+        )
+
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            IconButton(onClick = { navController.navigate("profile") {
-                navController.navigate("profile") {
-                    // 다른 탭으로 이동하는 것과 동일한 옵션 적용
-                    popUpTo(navController.graph.findStartDestination().id) {
-                        saveState = true
+            IconButton(
+                onClick = {
+                    navController.navigate(BottomNavItem.Profile.route) {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
                     }
-                    launchSingleTop = true
-                    restoreState = true
-                }
-            } }, modifier = Modifier.size(24.dp)) {
+                },
+                modifier = Modifier.size(24.dp)
+            ) {
                 Icon(
-                    imageVector = Icons.Default.AccountCircle,
+                    Icons.Default.AccountCircle,
                     contentDescription = "프로필",
-                    tint = Color.White
+                    tint = Color.DarkGray
                 )
             }
-            IconButton(onClick = { /* ... */ }, modifier = Modifier.size(24.dp)) {
+
+            IconButton(
+                onClick = { },
+                modifier = Modifier.size(24.dp)
+            ) {
                 Icon(
-                    imageVector = Icons.Default.Settings,
+                    Icons.Default.Settings,
                     contentDescription = "설정",
-                    tint = Color.White
+                    tint = Color.DarkGray
                 )
             }
         }
     }
 }
 
+/**
+ * 게시글 본문 영역
+ *
+ * - 제목, 작성 시간, 모집 상태
+ * - 이미지 및 본문 내용
+ * - 작성자 정보 표시
+ */
 @Composable
-fun PostContent() {
+fun PostContent(post: Post) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -136,47 +229,51 @@ fun PostContent() {
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+
+        // 제목 및 작성 시간 영역
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.Top
         ) {
-            Text("같이 헬스 할 사람~", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-            Text("11/07 21:27", fontSize = 12.sp, color = DetailSubTextColor)
-        }
-        Box(
-            modifier = Modifier
-                .clip(CircleShape)
-                .background(Color(0xFF6EE7B7)) // green-300
-                .padding(horizontal = 10.dp, vertical = 2.dp)
-        ) {
             Text(
-                "모집중",
-                color = Color(0xFF047857),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold
-            ) // green-800
-        }
-        HorizontalDivider(color = Color.Gray.copy(alpha = 0.5f))
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text("오늘 등이랑 하체 할건데 같이 할 사람 구합니당!", lineHeight = 24.sp)
-            Text("이따 6시 반쯤 학관 헬스장에서 운동할거에요", lineHeight = 24.sp)
-            Text("같이 하실 분 편하게 댓글 남겨주세요!", lineHeight = 24.sp)
-        }
-    }
-}
+                post.title,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f)
+            )
 
-@Composable
-fun CommenterProfile() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(DetailCardBackground)
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
+            Spacer(modifier = Modifier.size(8.dp))
+
+            Text(
+                post.createdAt?.toFormattedString() ?: "",
+                fontSize = 12.sp,
+                color = DetailSubTextColor
+            )
+        }
+
+        // 모집 상태 뱃지
+        StatusBadge(status = post.status)
+
+        HorizontalDivider(color = Color.Gray.copy(alpha = 0.5f))
+
+        // 게시글 이미지 (있을 경우에만 표시)
+        post.imageUrl?.let {
+            AsyncImage(
+                model = it,
+                contentDescription = "게시물 이미지",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp)),
+                contentScale = ContentScale.Crop
+            )
+        }
+
+        // 게시글 본문 텍스트
+        Text(post.content, lineHeight = 24.sp)
+
+        // 작성자 정보 영역
+        Spacer(modifier = Modifier.height(8.dp))
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -188,26 +285,26 @@ fun CommenterProfile() {
                     .background(Color.LightGray),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Outlined.Person, contentDescription = "프로필", tint = Color.Gray)
+                Icon(
+                    Icons.Outlined.Person,
+                    contentDescription = "작성자 프로필",
+                    tint = Color.Gray
+                )
             }
-            Column {
-                Text("정윤님", fontWeight = FontWeight.Bold)
-                Text("가장 많이 사용한 태그", fontSize = 12.sp, color = DetailSubTextColor)
-            }
-        }
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
-                .background(Color.LightGray.copy(alpha = 0.5f))
-                .padding(horizontal = 10.dp, vertical = 4.dp)
-        ) {
-            Text("헬스", fontSize = 12.sp, color = DetailSubTextColor)
+            Text(post.authorName, fontWeight = FontWeight.Bold)
         }
     }
 }
 
+/**
+ * 댓글 하나를 표시하는 Composable
+ *
+ * - 작성자 정보
+ * - 작성 시각
+ * - 댓글 내용
+ */
 @Composable
-fun Comment() {
+fun CommentItem(comment: Comment) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -220,6 +317,8 @@ fun Comment() {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
+
+            // 댓글 작성자 정보
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -231,34 +330,69 @@ fun Comment() {
                         .background(Color.LightGray),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Outlined.Person, contentDescription = "프로필", tint = Color.Gray)
+                    Icon(
+                        Icons.Outlined.Person,
+                        contentDescription = "프로필",
+                        tint = Color.Gray
+                    )
                 }
-                Text("상원님", fontWeight = FontWeight.Bold)
+                Text(comment.authorName, fontWeight = FontWeight.Bold)
             }
-            Text("11/07 21:27", fontSize = 12.sp, color = DetailSubTextColor)
+
+            // 댓글 작성 시각
+            Text(
+                comment.createdAt?.toFormattedString() ?: "",
+                fontSize = 12.sp,
+                color = DetailSubTextColor
+            )
         }
+
         Spacer(modifier = Modifier.height(8.dp))
-        Text("저요저요!!!", modifier = Modifier.padding(start = 52.dp))
+
+        // 댓글 내용
+        Text(
+            comment.content,
+            modifier = Modifier.padding(start = 52.dp)
+        )
     }
 }
 
+/**
+ * 댓글 입력 필드
+ *
+ * - 사용자가 댓글을 입력
+ * - 입력 값이 있을 때만 전송 버튼 활성화
+ */
 @Composable
-fun CommentInputField() {
+fun CommentInputField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    onSendClick: () -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(BoardBackground) // 배경색을 화면과 동일하게 맞춤
-            .padding(horizontal = 16.dp, vertical = 8.dp) // 여백 조정
+            .background(BoardBackground)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
-            placeholder = { Text("댓글을 입력해주세요.", color = DetailSubTextColor) },
+            value = value,
+            onValueChange = onValueChange,
+            placeholder = {
+                Text("댓글을 입력해주세요.", color = DetailSubTextColor)
+            },
             modifier = Modifier.fillMaxWidth(),
             shape = CircleShape,
             trailingIcon = {
-                IconButton(onClick = { /* 댓글 전송 */ }) {
-                    Icon(Icons.Outlined.Send, contentDescription = "전송", tint = BoardPrimary)
+                IconButton(
+                    onClick = onSendClick,
+                    enabled = value.isNotBlank()
+                ) {
+                    Icon(
+                        Icons.Outlined.Send,
+                        contentDescription = "전송",
+                        tint = if (value.isNotBlank()) BoardPrimary else Color.Gray
+                    )
                 }
             },
             colors = OutlinedTextFieldDefaults.colors(
@@ -271,8 +405,24 @@ fun CommentInputField() {
     }
 }
 
+/**
+ * Firebase Timestamp를
+ * "MM/dd HH:mm" 형식의 문자열로 변환하는 확장 함수
+ */
+fun Timestamp.toFormattedString(): String {
+    val sdf = SimpleDateFormat("MM/dd HH:mm", Locale.getDefault())
+    return sdf.format(this.toDate())
+}
+
+/**
+ * PostDetailScreen 미리보기용 Composable
+ */
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
 fun PostDetailScreenPreview() {
-    PostDetailScreen(navController = rememberNavController())
+    PostDetailScreen(
+        navController = rememberNavController(),
+        postId = ""
+    )
 }

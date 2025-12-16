@@ -41,6 +41,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -61,11 +63,25 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.kau_plan.ui.theme.KauplanHomeScreenTheme
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.annotation.RequiresApi
+import android.os.Build
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+import java.time.LocalTime
 
-data class TodoItem(val text: String, val isChecked: Boolean)
-
+@RequiresApi(Build.VERSION_CODES.O) // API 레벨 경고 해결을 위한 어노테이션 추가
 @Composable
-fun HomeScreen(navController: NavHostController) {
+fun HomeScreen(
+    navController: NavHostController,
+    homeViewModel: HomeViewModel = viewModel()
+) {
+    // ViewModel로부터 데이터 상태를 가져옴
+    val commonList by homeViewModel.commonList.collectAsState()
+    val personalList by homeViewModel.personalList.collectAsState()
+    val progress by homeViewModel.dailyRoutineProgress.collectAsState(initial = 0f)
+
     KauplanHomeScreenTheme {
         Scaffold { innerPadding ->
             Column(
@@ -79,8 +95,19 @@ fun HomeScreen(navController: NavHostController) {
             ) {
                 HomeHeader(navController = navController)
                 UserProfileCard()
-                DailyRoutineCard()
-                TodoListCard()
+                // DailyRoutineCard에 ViewModel의 progress 전달
+                DailyRoutineCard(progress = progress)
+                // TodoListCard에 ViewModel의 데이터와 함수 전달
+                TodoListCard(
+                    commonList = commonList,
+                    personalList = personalList,
+                    onItemCheckedChange = { item, isCommon ->
+                        homeViewModel.updateCheckedState(item, isCommon)
+                    },
+                    onSave = { newCommon, newPersonal ->
+                        homeViewModel.saveLists(newCommon, newPersonal)
+                    }
+                )
             }
         }
     }
@@ -89,8 +116,13 @@ fun HomeScreen(navController: NavHostController) {
 /**
  * 화면 상단의 날짜와 아이콘 버튼이 있는 헤더입니다.
  */
+@RequiresApi(Build.VERSION_CODES.O) // API 레벨 경고 해결을 위한 어노테이션 추가
 @Composable
 fun HomeHeader(navController: NavHostController) {
+    // 현재 날짜를 가져오는 로직
+    val currentDate = LocalDate.now()
+    val formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.US)
+    val formattedDate = currentDate.format(formatter)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -101,9 +133,9 @@ fun HomeHeader(navController: NavHostController) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "Nov 7, 2025",
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
-            style = MaterialTheme.typography.titleLarge
+            text = formattedDate,
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onPrimaryContainer
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             IconButton(onClick = { navController.navigate("profile") {
@@ -195,7 +227,7 @@ fun UserProfileCard() {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     // 부제목 색상을 onSurfaceVariant로 변경
-                    Text("35% 사용", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("35% 사용", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
                     Text("잘 절약하는 중이네요! 😊", style = MaterialTheme.typography.bodyMedium)
                 }
             }
@@ -207,8 +239,13 @@ fun UserProfileCard() {
 /**
  * 하루 루틴 달성률을 원형 프로그레스 바로 보여주는 카드입니다.
  */
+@RequiresApi(Build.VERSION_CODES.O) // API 레벨 경고 해결을 위한 어노테이션 추가
 @Composable
-fun DailyRoutineCard() {
+fun DailyRoutineCard(progress: Float) {
+    // 현재 시간을 가져오는 로직
+    val currentTime = LocalTime.now()
+    val timeFormatter = DateTimeFormatter.ofPattern("a h시").withLocale(Locale.forLanguageTag("ko"))
+    val formattedTime = currentTime.format(timeFormatter)
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
@@ -223,11 +260,12 @@ fun DailyRoutineCard() {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(24.dp)
             ) {
-                CircularProgressBar(percentage = 0.3f, radius = 48.dp)
+                CircularProgressBar(percentage = progress, radius = 48.dp) // ViewModel의 progress 사용
                 Column {
-                    Text("오후 8시까지 30% 달성!", style = MaterialTheme.typography.titleMedium)
-                    // 부제목 색상을 onSurfaceVariant로 변경
-                    Text("아직 할 일이 많아요! 😢", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.outline)
+                    // Text에 포맷된 시간을 적용
+                    Text("${formattedTime}까지 ${(progress * 100).toInt()}% 달성!", style = MaterialTheme.typography.titleMedium)
+                    val subtitle = if (progress < 0.5f) "아직 할 일이 많아요! 😢" else "잘하고 있어요! 👍"
+                    Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.outline)
                 }
             }
         }
@@ -287,21 +325,24 @@ fun CircularProgressBar(percentage: Float, radius: Dp) {
  * 공동/개인 리스트를 보여주는 카드입니다.
  */
 @Composable
-fun TodoListCard() {
+fun TodoListCard(
+    commonList: List<TodoItem>,
+    personalList: List<TodoItem>,
+    onItemCheckedChange: (TodoItem, Boolean) -> Unit,
+    onSave: (List<TodoItem>, List<TodoItem>) -> Unit
+) {
     var isEditMode by remember { mutableStateOf(false) }
-    var commonList by remember {
-        mutableStateOf(listOf(
-            TodoItem("빨래하기", true),
-            TodoItem("분리수거하기", false),
-            TodoItem("청소하기", false)
-        ))
+
+    // 수정 모드에서 사용할 임시 상태 변수
+    var tempCommonList by remember { mutableStateOf(commonList) }
+    var tempPersonalList by remember { mutableStateOf(personalList) }
+
+    // ViewModel의 원본 데이터가 변경되면 임시 리스트도 업데이트
+    LaunchedEffect(commonList) {
+        tempCommonList = commonList
     }
-    var personalList by remember {
-        mutableStateOf(listOf(
-            TodoItem("운동하기", true),
-            TodoItem("과제하기", false),
-            TodoItem("독서하기", false)
-        ))
+    LaunchedEffect(personalList) {
+        tempPersonalList = personalList
     }
 
     Card(
@@ -316,15 +357,16 @@ fun TodoListCard() {
             Row(Modifier.fillMaxWidth()) {
                 TodoListSection(
                     title = "공동 리스트",
-                    items = commonList,
-                    onItemCheckedChange = { index, isChecked ->
-                        commonList = commonList.toMutableList().also { it[index] = it[index].copy(isChecked = isChecked) }
+                    items = if (isEditMode) tempCommonList else commonList,
+                    onItemCheckedChange = { item ->
+                        // 체크 변경은 즉시 ViewModel로 전달 (수정 모드에서는 체크 불가)
+                        onItemCheckedChange(item, true)
                     },
                     onAddItem = { text ->
-                        commonList = commonList + TodoItem(text, false)
+                        tempCommonList = tempCommonList + TodoItem(text, false)
                     },
                     onDeleteItem = { index ->
-                        commonList = commonList.toMutableList().also { it.removeAt(index) }
+                        tempCommonList = tempCommonList.toMutableList().also { it.removeAt(index) }
                     },
                     isEditMode = isEditMode,
                     modifier = Modifier.weight(1f)
@@ -332,15 +374,15 @@ fun TodoListCard() {
                 Spacer(modifier = Modifier.width(16.dp))
                 TodoListSection(
                     title = "개인 리스트",
-                    items = personalList,
-                    onItemCheckedChange = { index, isChecked ->
-                        personalList = personalList.toMutableList().also { it[index] = it[index].copy(isChecked = isChecked) }
+                    items = if (isEditMode) tempPersonalList else personalList,
+                    onItemCheckedChange = { item ->
+                        onItemCheckedChange(item, false)
                     },
                     onAddItem = { text ->
-                        personalList = personalList + TodoItem(text, false)
+                        tempPersonalList = tempPersonalList + TodoItem(text, false)
                     },
                     onDeleteItem = { index ->
-                        personalList = personalList.toMutableList().also { it.removeAt(index) }
+                        tempPersonalList = tempPersonalList.toMutableList().also { it.removeAt(index) }
                     },
                     isEditMode = isEditMode,
                     modifier = Modifier.weight(1f)
@@ -349,7 +391,13 @@ fun TodoListCard() {
             Spacer(modifier = Modifier.height(24.dp))
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
                 FilledTonalButton(
-                    onClick = { isEditMode = !isEditMode },
+                    onClick = {
+                        if (isEditMode) {
+                            // '완료' 버튼 클릭 시, ViewModel의 saveLists 함수 호출
+                            onSave(tempCommonList, tempPersonalList)
+                        }
+                        isEditMode = !isEditMode
+                    },
                     shape = MaterialTheme.shapes.small,
                     colors = if (isEditMode) {
                         ButtonDefaults.filledTonalButtonColors(
@@ -378,7 +426,7 @@ fun TodoListCard() {
 fun TodoListSection(
     title: String,
     items: List<TodoItem>,
-    onItemCheckedChange: (Int, Boolean) -> Unit,
+    onItemCheckedChange: (TodoItem) -> Unit,
     onAddItem: (String) -> Unit,
     onDeleteItem: (Int) -> Unit,
     isEditMode: Boolean,
@@ -408,11 +456,12 @@ fun TodoListSection(
                     // 텍스트 입력 필드
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.border(
-                            width = 1.dp,
-                            color = Color.White,
-                            shape = RoundedCornerShape(8.dp)
-                        )
+                        modifier = Modifier
+                            .border(
+                                width = 1.dp,
+                                color = Color.White,
+                                shape = RoundedCornerShape(8.dp)
+                            )
                             .padding(horizontal = 8.dp)
                     ) {
                         BasicTextField(
@@ -447,11 +496,13 @@ fun TodoListSection(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.clickable {
                         if (!isEditMode) { // 수정 모드가 아닐 때만 체크 가능
-                            onItemCheckedChange(index, !item.isChecked)
+                            // --- 여기가 핵심 수정 부분 ---
+                            // 인덱스가 아닌, 클릭된 'item' 객체 자체를 전달합니다.
+                            onItemCheckedChange(item)
                         }
                     }
                 ) {
-                    if (item.isChecked) {
+                    if (item.checked) {
                         Box(
                             contentAlignment = Alignment.Center,
                             modifier = Modifier.size(24.dp)
@@ -477,7 +528,7 @@ fun TodoListSection(
     }
 }
 
-
+@RequiresApi(Build.VERSION_CODES.O) // API 레벨 경고 해결을 위한 어노테이션 추가
 @Preview(showBackground = true, name = "HomeScreen Preview")
 @Composable
 fun HomeScreenPreview() {
