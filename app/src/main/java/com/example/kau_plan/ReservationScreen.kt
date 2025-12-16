@@ -1,8 +1,8 @@
 package com.example.kau_plan
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -14,7 +14,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -32,14 +32,14 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import java.util.Date
 
-// --- 색상 정의 ---
 val MainPurple = Color(0xFF5B4DFF)
 val DisabledGrey = Color(0xFFD9D9D9)
 val TextBlack = Color(0xFF000000)
 val BorderGrey = Color(0xFFE0E0E0)
 
-// --- 데이터 모델 ---
 data class ReservationItemData(
     val id: Int,
     val title: String,
@@ -47,9 +47,10 @@ data class ReservationItemData(
     val imageResId: Int? = null
 )
 
-// ★ 메인 화면
 @Composable
-fun ReservationScreen() {
+fun ReservationScreen(
+    onNavigateBack: () -> Unit
+) {
     var selectedItemTitle by remember { mutableStateOf<String?>(null) }
 
     if (selectedItemTitle == null) {
@@ -61,19 +62,17 @@ fun ReservationScreen() {
     } else {
         ReservationFormScreen(
             itemTitle = selectedItemTitle!!,
-            onBack = { selectedItemTitle = null }
+            onBack = { selectedItemTitle = null },
+            onReservationComplete = onNavigateBack
         )
     }
 }
 
-// --- 1. 메뉴 선택 화면 ---
 @Composable
 fun ReservationMenuScreen(onItemClick: (String) -> Unit) {
-    // 모든 항목에 이미지 적용 (세탁기, 건조기, 냉장고)
     val items = listOf(
         ReservationItemData(1, "세탁기", imageResId = R.drawable.washingmachine),
         ReservationItemData(2, "건조기", imageResId = R.drawable.dryer),
-        // 냉장고 관련 메뉴 2개 모두 mini.png 사용
         ReservationItemData(3, "냉장고 출입 신고", imageResId = R.drawable.mini),
         ReservationItemData(4, "냉장고 반출 신고", imageResId = R.drawable.mini)
     )
@@ -112,33 +111,38 @@ fun ReservationMenuScreen(onItemClick: (String) -> Unit) {
     }
 }
 
-// --- 2. 입력 폼 화면 ---
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ReservationFormScreen(itemTitle: String, onBack: () -> Unit) {
+fun ReservationFormScreen(
+    itemTitle: String,
+    onBack: () -> Unit,
+    onReservationComplete: () -> Unit
+) {
+    val viewModel: ReservationViewModel = viewModel()
+    val context = LocalContext.current
+
     val isFridge = itemTitle.contains("냉장고")
 
-    // --- 공통 상태 ---
     var name by remember { mutableStateOf("") }
     var studentId by remember { mutableStateOf("") }
 
-    // --- 세탁기/건조기 전용 상태 ---
     var selectedMachineOption by remember { mutableStateOf<String?>(null) }
     var expanded by remember { mutableStateOf(false) }
     var selectedTime by remember { mutableStateOf("이용 가능한 시간대를 선택해주세요") }
-    val timeOptions = listOf("09:00 ~ 10:00", "10:00 ~ 11:00", "11:00 ~ 12:00", "12:00 ~ 13:00")
+    val timeOptions = listOf("09:00 ~ 10:00", "10:00 ~ 11:00", "11:00 ~ 12:00", "12:00 ~ 13:00", "13:00 ~ 14:00", "14:00 ~ 15:00", "15:00 ~ 16:00")
 
-    // --- 냉장고 전용 상태 ---
-    var selectedReportType by remember {
-        mutableStateOf(if (itemTitle.contains("출입")) "출입 신고" else "반출 신고")
-    }
+    var selectedReportType by remember { mutableStateOf(if (itemTitle.contains("출입")) "출입 신고" else "반출 신고") }
     var fridgeContent by remember { mutableStateOf("") }
+
+    var isLoading by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             Column {
                 Box(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp)
                 ) {
                     IconButton(
                         onClick = onBack,
@@ -166,7 +170,6 @@ fun ReservationFormScreen(itemTitle: String, onBack: () -> Unit) {
         ) {
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- 타이틀 ---
             if (isFridge) {
                 Text(
                     text = buildAnnotatedString {
@@ -196,7 +199,6 @@ fun ReservationFormScreen(itemTitle: String, onBack: () -> Unit) {
             Text(text = "* 표시는 필수 입력 사항입니다", color = Color.Gray, fontSize = 12.sp)
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- 1. 이름 ---
             InputLabel(text = "이름", isRequired = true)
             OutlinedTextField(
                 value = name,
@@ -212,7 +214,6 @@ fun ReservationFormScreen(itemTitle: String, onBack: () -> Unit) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // --- 2. 학번 ---
             InputLabel(text = "학번", isRequired = true)
             OutlinedTextField(
                 value = studentId,
@@ -229,9 +230,7 @@ fun ReservationFormScreen(itemTitle: String, onBack: () -> Unit) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- 3 & 4. 폼 내용 ---
             if (isFridge) {
-                // 냉장고 폼
                 InputLabel(text = "출입 / 반출 유형을 선택해주세요", isRequired = true)
                 val reportOptions = listOf("출입 신고", "반출 신고")
                 reportOptions.forEach { option ->
@@ -270,7 +269,6 @@ fun ReservationFormScreen(itemTitle: String, onBack: () -> Unit) {
                 )
 
             } else {
-                // 세탁기/건조기 폼
                 InputLabel(text = "예약하고자 하는 $itemTitle 종류를 선택해주세요", isRequired = true)
                 val machineOptions = listOf("$itemTitle - A", "$itemTitle - B", "$itemTitle - C")
                 machineOptions.forEach { option ->
@@ -293,26 +291,27 @@ fun ReservationFormScreen(itemTitle: String, onBack: () -> Unit) {
                 Spacer(modifier = Modifier.height(24.dp))
 
                 InputLabel(text = "이용하실려는 시간대를 선택해주세요", isRequired = true)
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .border(1.dp, BorderGrey, RoundedCornerShape(24.dp))
-                        .clickable { expanded = true }
-                        .padding(16.dp)
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = { expanded = !expanded }
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(text = selectedTime, color = if(selectedTime.contains("선택")) Color.Gray else Color.Black)
-                        Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = Color.Gray)
-                    }
-
-                    DropdownMenu(
+                    OutlinedTextField(
+                        value = selectedTime,
+                        onValueChange = {},
+                        readOnly = true,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                        modifier = Modifier
+                            .menuAnchor()
+                            .fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = BorderGrey,
+                            focusedBorderColor = MainPurple
+                        )
+                    )
+                    ExposedDropdownMenu(
                         expanded = expanded,
-                        onDismissRequest = { expanded = false },
-                        modifier = Modifier.background(Color.White)
+                        onDismissRequest = { expanded = false }
                     ) {
                         timeOptions.forEach { time ->
                             DropdownMenuItem(
@@ -329,29 +328,57 @@ fun ReservationFormScreen(itemTitle: String, onBack: () -> Unit) {
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            // --- 확인 버튼 ---
             Button(
-                onClick = { /* DB 전송 로직 */ },
+                onClick = {
+                    isLoading = true
+                    val reservationData = ReservationData(
+                        itemTitle = if (isFridge) selectedReportType else selectedMachineOption ?: itemTitle,
+                        studentName = name,
+                        studentId = studentId,
+                        reservationTime = if (isFridge) null else selectedTime,
+                        fridgeContent = if (isFridge) fridgeContent else null,
+                        createdAt = Date()
+                    )
+
+                    viewModel.saveReservation(
+                        reservation = reservationData,
+                        onSuccess = {
+                            isLoading = false
+                            Toast.makeText(context, "예약/신고가 완료되었습니다.", Toast.LENGTH_SHORT).show()
+                            onReservationComplete()
+                        },
+                        onFailure = {
+                            isLoading = false
+                            Toast.makeText(context, "실패했습니다. 다시 시도해주세요.", Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(28.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MainPurple)
+                colors = ButtonDefaults.buttonColors(containerColor = MainPurple),
+                enabled = !isLoading
             ) {
-                Text(text = "확인하기", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                if (isLoading) {
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                } else {
+                    Text(text = "확인하기", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(40.dp))
+
         }
     }
 }
 
-// --- 보조 컴포저블 ---
-
 @Composable
 fun HeaderTitle(title: String) {
     Box(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(text = title, fontSize = 18.sp, fontWeight = FontWeight.Bold)
@@ -374,7 +401,7 @@ fun ReservationCard(item: ReservationItemData, onClick: () -> Unit) {
         modifier = Modifier
             .aspectRatio(1f)
             .clip(RoundedCornerShape(20.dp))
-            .background(DisabledGrey)
+            .background(Color(0xFFF5F5F5))
             .clickable { onClick() }
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -390,7 +417,7 @@ fun ReservationCard(item: ReservationItemData, onClick: () -> Unit) {
             Icon(
                 imageVector = item.iconVector,
                 contentDescription = item.title,
-                tint = Color.White,
+                tint = TextBlack,
                 modifier = Modifier.size(64.dp)
             )
         }
@@ -399,7 +426,7 @@ fun ReservationCard(item: ReservationItemData, onClick: () -> Unit) {
 
         Text(
             text = item.title,
-            color = Color.White,
+            color = TextBlack,
             fontWeight = FontWeight.Bold,
             fontSize = 16.sp,
             textAlign = TextAlign.Center
@@ -410,5 +437,5 @@ fun ReservationCard(item: ReservationItemData, onClick: () -> Unit) {
 @Preview(showBackground = true)
 @Composable
 fun PreviewReservation() {
-    ReservationScreen()
+    ReservationScreen(onNavigateBack = {})
 }
