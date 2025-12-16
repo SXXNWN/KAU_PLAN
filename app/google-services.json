@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "97733297614",
+    "project_id": "kau-plan",
+    "storage_bucket": "kau-plan.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:97733297614:android:b8e6f54da65af5b862979f",
+        "android_client_info": {
+          "package_name": "com.example.kau_plan"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBBwCd5XmXUol9XhiXOvMmbkuwnNl2YAGI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
