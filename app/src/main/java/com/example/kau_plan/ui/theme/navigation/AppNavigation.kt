@@ -9,6 +9,8 @@ import com.example.kau_plan.ui.theme.expense.ExpenseListScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.kau_plan.ui.theme.expense.ExpenseViewModel
 import com.example.kau_plan.ui.theme.profile.ProfileScreen
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 
 @Composable
 fun AppNavigation(
@@ -24,7 +26,6 @@ fun AppNavigation(
         modifier = modifier
     ) {
 
-        // 🔹 소비내역 화면
         composable("expense_list") {
             ExpenseListScreen(
                 monthlyTotal = viewModel.monthlyTotal,
@@ -32,14 +33,37 @@ fun AppNavigation(
                 expenses = viewModel.expenses,
                 onAddClick = {
                     navController.navigate("add_expense")
+                },
+                onEditClick = { expense ->
+                    navController.navigate("add_expense?expenseId=${expense.id}")
+                },
+                onDeleteClick = { expense ->
+                    viewModel.deleteExpense(expense.id)
                 }
             )
         }
 
-        composable("add_expense") {
+        composable(
+            route = "add_expense?expenseId={expenseId}",
+            arguments = listOf(
+                navArgument("expenseId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val expenseId = backStackEntry.arguments?.getString("expenseId")
+            val expenseToEdit = expenseId?.let { viewModel.findExpenseById(it) }
+
             AddExpenseScreen(
+                expenseToEdit = expenseToEdit,
                 onSaveClick = { expense: Expense ->
-                    viewModel.addExpense(expense)   // ★ 실제 저장
+                    if (expense.id.isBlank()) {
+                        viewModel.addExpense(expense)
+                    } else {
+                        viewModel.updateExpense(expense)
+                    }
                     navController.popBackStack()
                 },
                 onCancelClick = {
@@ -55,11 +79,16 @@ fun AppNavigation(
                 expenses = viewModel.expenses,
                 onAddClick = {
                     navController.navigate("add_expense")
+                },
+                onEditClick = { expense ->
+                    navController.navigate("add_expense?expenseId=${expense.id}")
+                },
+                onDeleteClick = { expense ->
+                    viewModel.deleteExpense(expense.id)
                 }
             )
         }
 
-        // 🔹 프로필 화면
         composable(route = "profile") {
             ProfileScreen(
                 monthlyTotal = viewModel.monthlyTotal,
