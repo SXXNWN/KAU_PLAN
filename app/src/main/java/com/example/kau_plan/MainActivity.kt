@@ -1,58 +1,20 @@
-//package com.example.kau_plan
-//
-//import android.os.Bundle
-//import androidx.appcompat.app.AppCompatActivity
-//import androidx.fragment.app.Fragment
-//import com.google.android.material.bottomnavigation.BottomNavigationView
-//
-//class MainActivity : AppCompatActivity() {
-//
-//    override fun onCreate(savedInstanceState: Bundle?) {
-//        super.onCreate(savedInstanceState)
-//        setContentView(R.layout.activity_main)
-//
-//        val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_nav)
-//
-//        // 초기 화면
-//        replaceFragment(HomeFragment())
-//
-//        bottomNav.setOnItemSelectedListener { item ->
-//            when (item.itemId) {
-//                R.id.nav_home -> replaceFragment(HomeFragment())
-//                R.id.nav_status -> replaceFragment(StatusFragment())
-//                R.id.nav_consumption -> replaceFragment(ConsumptionFragment())
-//                R.id.nav_board -> replaceFragment(BoardFragment())
-//                R.id.nav_shop -> replaceFragment(ShopFragment())
-//                R.id.nav_my_page -> replaceFragment(MyPageFragment())
-//            }
-//            true
-//        }
-//    }
-//
-//    private fun replaceFragment(fragment: Fragment) {
-//        supportFragmentManager.beginTransaction()
-//            .replace(R.id.nav_host, fragment)
-//            .commit()
-//    }
-//}
-
 package com.example.kau_plan
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
 import com.example.kau_plan.ui.theme.KAU_PLANTheme
 
 class MainActivity : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // 앱의 메인 화면을 설정하는 부분입니다.
         setContent {
+            // 앱의 전체 테마를 적용합니다.
             KAU_PLANTheme {
-                HangPlanApp()   // ← 우리가 앞으로 만들 전체 UI
+                // 직접 만드신 HangPlanApp Composable을 호출하여 화면에 표시합니다.
+                HangPlanApp()
             }
         }
     }
