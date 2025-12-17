@@ -30,6 +30,7 @@ fun AppNavigation(
             ExpenseListScreen(
                 monthlyTotal = viewModel.monthlyTotal,
                 monthlyGoal = viewModel.monthlyGoal,
+                roomMonthlyGoal = viewModel.roomMonthlyGoal,
                 expenses = viewModel.expenses,
                 onAddClick = {
                     navController.navigate("add_expense")
@@ -73,22 +74,23 @@ fun AppNavigation(
             )
         }
 
-        composable(route = "home") {
-            ExpenseListScreen(
-                monthlyTotal = viewModel.monthlyTotal,
-                monthlyGoal = viewModel.monthlyGoal,
-                expenses = viewModel.expenses,
-                onAddClick = {
-                    navController.navigate("add_expense")
-                },
-                onEditClick = { expense ->
-                    navController.navigate("add_expense?expenseId=${expense.id}")
-                },
-                onDeleteClick = { expense ->
-                    viewModel.deleteExpense(expense.id)
-                }
-            )
-        }
+//        composable(route = "home") {
+//            ExpenseListScreen(
+//                monthlyTotal = viewModel.monthlyTotal,
+//                monthlyGoal = viewModel.monthlyGoal,
+//                roomMonthlyGoal = viewModel.roomMonthlyGoal,
+//                expenses = viewModel.expenses,
+//                onAddClick = {
+//                    navController.navigate("add_expense")
+//                },
+//                onEditClick = { expense ->
+//                    navController.navigate("add_expense?expenseId=${expense.id}")
+//                },
+//                onDeleteClick = { expense ->
+//                    viewModel.deleteExpense(expense.id)
+//                }
+//            )
+//        }
 
         composable(route = "profile") {
             ProfileScreen(

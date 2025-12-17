@@ -20,6 +20,9 @@ class ExpenseViewModel : ViewModel() {
 
     var monthlyGoal by mutableStateOf(500_000)
 
+    var roomMonthlyGoal by mutableStateOf(2_000_000)
+
+
     init {
         startListening()
     }
@@ -46,7 +49,8 @@ class ExpenseViewModel : ViewModel() {
                     category = category,
                     payer = payer,
                     date = date,
-                    amount = amountLong.toInt()
+                    amount = amountLong.toInt(),
+                    memo = doc.getString("memo") ?: ""
                 )
             }
 
@@ -62,7 +66,8 @@ class ExpenseViewModel : ViewModel() {
             "category" to expense.category,
             "payer" to expense.payer,
             "date" to expense.date,
-            "amount" to expense.amount
+            "amount" to expense.amount,
+            "memo" to expense.memo
         )
     }
 

@@ -6,6 +6,7 @@ data class Expense(
     val payer: String = "",
     val date: String = "",
     val amount: Int = 0,
+    val memo: String = "",
     val id: String = ""
 )
 

@@ -44,6 +44,7 @@ import com.example.kau_plan.data.Expense
 fun ExpenseListScreen(
     monthlyTotal: Int,
     monthlyGoal: Int,
+    roomMonthlyGoal: Int,
     expenses: List<Expense>,
     onAddClick: () -> Unit,
     onEditClick: (Expense) -> Unit = {},
@@ -86,7 +87,8 @@ fun ExpenseListScreen(
         ) {
             MonthlySummaryCard(
                 monthlyTotal = monthlyTotal,
-                monthlyGoal = monthlyGoal
+                monthlyGoal = monthlyGoal,
+                roomMonthlyGoal = roomMonthlyGoal
             )
 
             Spacer(modifier = Modifier.height(13.dp))
@@ -112,7 +114,8 @@ fun ExpenseListScreen(
 @Composable
 fun MonthlySummaryCard(
     monthlyTotal: Int,
-    monthlyGoal: Int
+    monthlyGoal: Int,
+    roomMonthlyGoal: Int
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -128,9 +131,9 @@ fun MonthlySummaryCard(
                 .padding(20.dp)
         ) {
             Text(
-                text = "이번 달 총 지출",
+                text = "250호 이번 달 총 지출",
                 color = Color.White,
-                fontSize = 14.sp
+                fontSize = 16.sp
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
@@ -152,7 +155,7 @@ fun MonthlySummaryCard(
                     fontSize = 12.sp
                 )
                 Text(
-                    text = "%,d원".format(monthlyGoal),
+                    text = "%,d원".format(roomMonthlyGoal),
                     color = Color.White,
                     fontSize = 12.sp
                 )
@@ -160,7 +163,7 @@ fun MonthlySummaryCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            val progress = (monthlyTotal.toFloat() / monthlyGoal.toFloat()).coerceIn(0f, 1f)
+            val progress = (monthlyTotal.toFloat() / roomMonthlyGoal.toFloat()).coerceIn(0f, 1f)
 
             Box(
                 modifier = Modifier
@@ -352,6 +355,7 @@ fun ExpenseListScreenPreview() {
     ExpenseListScreen(
         monthlyTotal = 229_500,
         monthlyGoal = 500_000,
+        roomMonthlyGoal = 2_000_000,
         expenses = sampleExpenses,
         onAddClick = {}
     )

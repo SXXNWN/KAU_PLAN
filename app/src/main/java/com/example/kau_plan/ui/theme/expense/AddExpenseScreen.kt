@@ -44,6 +44,7 @@ fun AddExpenseScreen(
             selectedCategory = expenseToEdit.category
             selectedPayer = expenseToEdit.payer
             date = expenseToEdit.date
+            memo = expenseToEdit.memo
         } else {
             title = ""
             amountText = ""
@@ -183,6 +184,7 @@ fun AddExpenseScreen(
                         payer = selectedPayer,
                         date = date,
                         amount = amount,
+                        memo = memo,
                         id = expenseToEdit?.id ?: ""
                     )
                     onSaveClick(expense)
