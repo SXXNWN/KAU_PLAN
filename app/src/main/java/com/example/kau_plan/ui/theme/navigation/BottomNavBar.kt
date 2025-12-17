@@ -34,7 +34,6 @@ fun BottomNavBar(navController: NavController) {
             NavigationBarItem(
                 selected = selected,
                 onClick = {
-                    // 같은 탭 여러번 눌러도 스택이 쌓이지 않게 하는 패턴
                     navController.navigate(item.route) {
                         popUpTo(navController.graph.startDestinationId) { saveState = true }
                         launchSingleTop = true

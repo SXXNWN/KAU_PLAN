@@ -1,5 +1,7 @@
 package com.example.kau_plan.ui.theme.navigation
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.Text
@@ -24,11 +26,13 @@ import com.example.kau_plan.ui.theme.home.HomeScreen
 import com.example.kau_plan.ui.theme.profile.ProfileScreen
 import com.example.kau_plan.ui.theme.board.WritePostScreen
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AppNavigation(
     navController: NavHostController,
     modifier: Modifier = Modifier
 ) {
+
     val viewModel: ExpenseViewModel = viewModel()
 
     NavHost(
@@ -45,31 +49,46 @@ fun AppNavigation(
             )
         }
 
-        // 🔹 가계부 화면
-        composable(BottomNavItem.Expense.route) {
+        composable("expense_list") {
             ExpenseListScreen(
                 monthlyTotal = viewModel.monthlyTotal,
                 monthlyGoal = viewModel.monthlyGoal,
+                roomMonthlyGoal = viewModel.roomMonthlyGoal,
                 expenses = viewModel.expenses,
                 onAddClick = {
                     navController.navigate("add_expense")
+                },
+                onEditClick = { expense ->
+                    navController.navigate("add_expense?expenseId=${expense.id}")   // 수정 아이콘을 누르면 콜백 함수가 expense를 전달함
+                },
+                onDeleteClick = { expense ->
+                    viewModel.deleteExpense(expense.id)
                 }
             )
         }
 
-        // 🔹 프로필(내정보) 화면
-        composable(BottomNavItem.Profile.route) {
-            ProfileScreen(
-                monthlyTotal = viewModel.monthlyTotal,
-                expenses = viewModel.expenses
+        composable(
+            // 지출 추가와 수정 모두 동일한 화면 사용, expenseId가 있으면 수정, 없으면 추가
+            route = "add_expense?expenseId={expenseId}",
+            arguments = listOf(
+                navArgument("expenseId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
             )
-        }
+        ) { backStackEntry ->
+            val expenseId = backStackEntry.arguments?.getString("expenseId")
+            val expenseToEdit = expenseId?.let { viewModel.findExpenseById(it) }
 
-        // 🔹 소비내역 '추가' 화면
-        composable("add_expense") {
             AddExpenseScreen(
+                expenseToEdit = expenseToEdit,
                 onSaveClick = { expense: Expense ->
-                    viewModel.addExpense(expense)
+                    if (expense.id.isBlank()) {         // expense.id가 비어 있다면 지출 추가
+                        viewModel.addExpense(expense)
+                    } else {                            // expense.id가 있다면 지출 수정
+                        viewModel.updateExpense(expense)
+                    }
                     navController.popBackStack()
                 },
                 onCancelClick = {

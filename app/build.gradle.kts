@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.google.gms.google.services)
+    id("com.google.gms.google-services")   // 추가
 }
 
 android {
@@ -51,10 +51,16 @@ android {
 }
 
 dependencies {
-    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
 
-    // 2. Firestore KTX 라이브러리 (작성하신 코드의 'ktx' import 오류를 해결해 줍니다)
+    // Firebase BOM (버전 통합 관리)
+    implementation(platform("com.google.firebase:firebase-bom:33.5.1"))
+
+    // Firestore (지출 데이터 저장용)
     implementation("com.google.firebase:firebase-firestore-ktx")
+
+    // Firebase Analytics
+    implementation("com.google.firebase:firebase-analytics-ktx")
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -66,7 +72,6 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-
     implementation("androidx.compose.material:material-icons-extended")
 
     implementation("androidx.navigation:navigation-compose:2.7.7")

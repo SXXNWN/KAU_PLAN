@@ -26,59 +26,94 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.time.LocalDate
 
 @Composable
 fun ProfileScreen(
     monthlyTotal: Int,
     expenses: List<com.example.kau_plan.data.Expense>
 ) {
-    // 스크롤 가능한 전체 레이아웃
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFFDF5F7))   // 배경 연한 핑크
+            .background(Color(0xFFFDF5F7))
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
+        val currentUser = "정윤님"
+        val currentMonth = remember { LocalDate.now().monthValue }
 
-        // 상단 프로필 카드
+        val userExpenses = remember(expenses) {     // 사용자의 전체 지출을 담은 리스트
+            expenses.filter { it.payer == currentUser }
+        }
+
+        val currentMonthUserExpenses = remember(userExpenses, currentMonth) {       // 이번달 사용자의 지출을 담은 리스트
+            userExpenses.filter { extractMonth(it.date) == currentMonth }
+        }
+
+        val currentMonthMonthlyTotal = remember(currentMonthUserExpenses) {                // 이번달 사용자의 지출 총합
+            currentMonthUserExpenses.sumOf { it.amount }
+        }
+
+
+        val currentMonthAllExpenses = remember(expenses, currentMonth) {            // 이번달 모든 사용자의 지출 리스트
+            expenses.filter { extractMonth(it.date) == currentMonth }
+        }
+
+
+        val monthlyGoal = 500_000
+        val goalPercent = remember(currentMonthMonthlyTotal) {
+            if (monthlyGoal == 0) 0 else (currentMonthMonthlyTotal * 100 / monthlyGoal)
+        }
+
         ProfileHeaderCard(
             userName = "정윤님",
             roomInfo = "250호 멤버",
-            monthlyExpense = monthlyTotal,
-            routineRate = 83
+            monthlyExpense = currentMonthMonthlyTotal,
+            goalPercent = goalPercent,
+            currentMonth = currentMonth
         )
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // 월별 생활비 (expenses 기준)
-        val monthlyTotals = remember(expenses) {
-            computeMonthlyTotals(expenses)
+        val monthlyTotals = remember(userExpenses) {
+            computeMonthlyTotals(userExpenses)
         }
         MonthlySpendingSection(monthlyTotals = monthlyTotals)
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // 카테고리별 지출
-        val categoryTotals = remember(expenses) {
-            computeCategoryTotals(expenses)
+        val categoryTotals = remember(currentMonthUserExpenses) {
+            computeCategoryTotals(currentMonthUserExpenses)
         }
-        CategorySpendingSection(categoryTotals = categoryTotals)
+        CategorySpendingSection(
+            currentMonth = currentMonth,
+            categoryTotals = categoryTotals
+        )
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // 주간 루틴 달성률
-        WeeklyRoutineSection()
+        val payerTotals = remember(currentMonthAllExpenses) {
+            computePayerTotals(currentMonthAllExpenses)
+        }
+
+        UserSpendingSection(
+            currentMonth = currentMonth,
+            payerTotals = payerTotals
+        )
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // 최근 활동
-        val recentExpenses = remember(expenses) {
-            expenses
+
+        val recentExpenses = remember(userExpenses) {
+            userExpenses
                 .sortedByDescending { it.date }
                 .take(4)
         }
-        RecentActivitySection(recentExpenses = recentExpenses)
+        RecentActivitySection(
+            currentMonth = currentMonth,
+            recentExpenses = recentExpenses
+        )
     }
 }
 
@@ -87,7 +122,8 @@ private fun ProfileHeaderCard(
     userName: String,
     roomInfo: String,
     monthlyExpense: Int,
-    routineRate: Int
+    goalPercent: Int,
+    currentMonth: Int
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -102,12 +138,10 @@ private fun ProfileHeaderCard(
                 .fillMaxWidth()
                 .padding(20.dp)
         ) {
-            // 상단: 프로필 사진 + 이름 + 설정 아이콘
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // 동그란 프로필 자리
                 Box(
                     modifier = Modifier
                         .size(56.dp)
@@ -145,7 +179,6 @@ private fun ProfileHeaderCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 가운데 구분선
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -155,14 +188,13 @@ private fun ProfileHeaderCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 하단: 이번 달 지출 / 루틴 달성률
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
                     Text(
-                        text = "이번 달 지출",
+                        text = "${currentMonth}월 지출",
                         fontSize = 14.sp,
                         color = Color(0xFFE0D7FF)
                     )
@@ -177,13 +209,13 @@ private fun ProfileHeaderCard(
 
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = "루틴 달성률",
+                        text = "목표 대비 지출 비율",
                         fontSize = 14.sp,
                         color = Color(0xFFE0D7FF)
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "$routineRate%",
+                        text = "$goalPercent%",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
@@ -199,7 +231,7 @@ private fun MonthlySpendingSection(
     monthlyTotals: Map<Int, Int>
 ) {
     SectionCard(
-        title = "월별 생활비",
+        title = "월별 지출",
         iconEmoji = "📉"
     ) {
         val months = (1..12).toList()
@@ -232,7 +264,7 @@ private fun MonthlySpendingSection(
                     ) {
                         Box(
                             modifier = Modifier
-                                .fillMaxWidth(0.55f) // 막대 두께
+                                .fillMaxWidth(0.55f)
                                 .height(barHeight)
                                 .background(Color(0xFF6B4DFF), RoundedCornerShape(6.dp))
                         )
@@ -252,17 +284,17 @@ private fun MonthlySpendingSection(
 
 @Composable
 private fun CategorySpendingSection(
+    currentMonth: Int,
     categoryTotals: Map<String, Int>
 ) {
     SectionCard(
-        title = "카테고리별 지출",
+        title = "${currentMonth}월 카테고리별 지출",
         iconEmoji = "📅"
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // 왼쪽: 간단한 도넛/파이 느낌의 원형 그래프 자리
             Box(
                 modifier = Modifier
                     .size(120.dp),
@@ -297,7 +329,6 @@ private fun CategorySpendingSection(
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            // 오른쪽: 범례 + 금액 리스트 (실제 데이터)
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -325,6 +356,76 @@ private fun CategorySpendingSection(
 }
 
 @Composable
+private fun UserSpendingSection(
+    currentMonth: Int,
+    payerTotals: Map<String, Int>
+) {
+    SectionCard(
+        title = "${currentMonth}월 사용자별 지출 비율",
+        iconEmoji = "👥"
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Box(
+                modifier = Modifier.size(120.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val total = payerTotals.values.sum().toFloat()
+                    var startAngle = -90f
+
+                    val colorMap = mapOf(
+                        "정윤님" to Color(0xFF4E7EFF),
+                        "지환님" to Color(0xFFFF8A80),
+                        "세현님" to Color(0xFFFFC107),
+                        "현우님" to Color(0xFF8BC34A)
+                    )
+
+                    payerTotals.forEach { (payer, amount) ->
+                        val sweepAngle = if (total == 0f) 0f else (amount / total) * 360f
+                        val color = colorMap[payer] ?: Color.LightGray
+                        drawArc(
+                            color = color,
+                            startAngle = startAngle,
+                            sweepAngle = sweepAngle,
+                            useCenter = true
+                        )
+                        startAngle += sweepAngle
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                val total = payerTotals.values.sum()
+                payerTotals.forEach { (payer, amount) ->
+                    val ratioText = if (total == 0) "0%" else "${amount * 100 / total}%"
+                    val color = when (payer) {
+                        "정윤님" -> Color(0xFF4E7EFF)
+                        "지환님" -> Color(0xFFFF8A80)
+                        "세현님" -> Color(0xFFFFC107)
+                        "현우님" -> Color(0xFF8BC34A)
+                        else -> Color.Gray
+                    }
+
+                    CategoryLegendRow(
+                        name = payer,
+                        amount = ratioText,
+                        color = color
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun CategoryLegendRow(
     name: String,
     amount: String,
@@ -341,61 +442,23 @@ private fun CategoryLegendRow(
         Spacer(modifier = Modifier.width(6.dp))
         Text(
             text = name,
-            fontSize = 12.sp,
+            fontSize = 15.sp,
             modifier = Modifier.weight(1f)
         )
         Text(
             text = amount,
-            fontSize = 12.sp
+            fontSize = 15.sp
         )
-    }
-}
-
-@Composable
-private fun WeeklyRoutineSection() {
-    SectionCard(
-        title = "주간 루틴 달성률",
-        iconEmoji = "🏁"
-    ) {
-        val days = listOf("월", "화", "수", "목", "금", "토", "일")
-        val values = listOf(90, 80, 70, 50, 40, 30, 20)
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(140.dp),
-            verticalAlignment = Alignment.Bottom,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            values.forEachIndexed { index, value ->
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Bottom
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .width(18.dp)
-                            .height(value.dp)
-                            .background(Color(0xFF5E8C5A), RoundedCornerShape(6.dp))
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = days[index],
-                        fontSize = 10.sp,
-                        color = Color.DarkGray
-                    )
-                }
-            }
-        }
     }
 }
 
 @Composable
 private fun RecentActivitySection(
+    currentMonth: Int,
     recentExpenses: List<com.example.kau_plan.data.Expense>
 ) {
     SectionCard(
-        title = "최근 활동",
+        title = "${currentMonth}월 최근 지출 내역",
         iconEmoji = "📝"
     ) {
         Column(
@@ -410,8 +473,12 @@ private fun RecentActivitySection(
             }
             recentExpenses.forEach { expense ->
                 Text(
-                    text = "• ${expense.date}  ${expense.title} ${"%,d원".format(expense.amount)}",
-                    fontSize = 12.sp
+                    text = buildString {
+                        append("• ${expense.date}  ${expense.title}: ${"%,d원".format(expense.amount)}")
+                        if (expense.memo.isNotBlank()) {
+                            append("\n   메모: ${expense.memo}")
+                        }
+                    },
                 )
             }
         }
@@ -459,15 +526,26 @@ private fun SectionCard(
     }
 }
 
-private fun computeMonthlyTotals(
+private fun extractMonth(date: String): Int? {
+    // Accept formats like "2025.12.04", "2025-12-04", "2025/12/04".
+    val parts = date.split('.', '-', '/').filter { it.isNotBlank() }
+    if (parts.size < 2) return null
+    return parts[1].toIntOrNull()
+}
+
+
+private fun computeMonthlyTotals(                       // 각 달을 key로 사용자의 달별 지출을 value로하는 map 생성
     expenses: List<com.example.kau_plan.data.Expense>
 ): Map<Int, Int> {
-    return expenses.groupBy { expense ->
-        // date format: yyyy.MM.dd (e.g., 2025.12.04)
-        expense.date.split(".")[1].toInt()
-    }.mapValues { entry ->
-        entry.value.sumOf { it.amount }
-    }
+    return expenses
+        .mapNotNull { expense ->
+            val month = extractMonth(expense.date) ?: return@mapNotNull null
+            month to expense
+        }
+        .groupBy({ it.first }, { it.second })
+        .mapValues { entry ->
+            entry.value.sumOf { it.amount }
+        }
 }
 
 private fun computeCategoryTotals(
@@ -476,6 +554,14 @@ private fun computeCategoryTotals(
     return expenses.groupBy { it.category }
         .mapValues { entry -> entry.value.sumOf { it.amount } }
 }
+
+private fun computePayerTotals(
+    expenses: List<com.example.kau_plan.data.Expense>
+): Map<String, Int> {
+    return expenses.groupBy { it.payer }
+        .mapValues { entry -> entry.value.sumOf { it.amount } }
+}
+
 
 @Preview(showBackground = true)
 @Composable
@@ -488,14 +574,16 @@ fun ProfileScreenPreview() {
                 category = "식비",
                 payer = "정윤님",
                 date = "2025.11.09",
-                amount = 24000
+                amount = 24000,
+                memo = "야식으로 주문"
             ),
             com.example.kau_plan.data.Expense(
                 title = "세제",
                 category = "생활용품",
                 payer = "정윤님",
                 date = "2025.12.04",
-                amount = 12000
+                amount = 12000,
+                memo = "세제 행사로 구매"
             )
         )
     )
