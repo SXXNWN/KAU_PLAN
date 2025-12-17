@@ -61,13 +61,7 @@ import com.google.firebase.Timestamp
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-/**
- * 게시글 상세 화면 Composable
- *
- * - 선택된 게시글의 상세 정보 표시
- * - 댓글 목록 조회 및 표시
- * - 댓글 작성 입력 처리
- */
+// 선택된 게시글의 상세 정보 표시
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun PostDetailScreen(
@@ -84,10 +78,7 @@ fun PostDetailScreen(
     // 댓글 입력창에 입력 중인 텍스트 상태
     var newCommentText by remember { mutableStateOf("") }
 
-    /**
-     * postId가 전달되었을 때
-     * 게시글 상세 정보와 댓글 목록을 함께 조회한다.
-     */
+    // 게시글 상세 정보와 댓글 가져오기
     LaunchedEffect(postId) {
         if (postId.isNotBlank()) {
             viewModel.fetchPostAndComments(postId)
@@ -95,10 +86,7 @@ fun PostDetailScreen(
     }
 
     Scaffold(
-        // 상단 앱바 (뒤로가기, 프로필, 설정)
         topBar = { DetailTopAppBar(navController = navController) },
-
-        // 하단 댓글 입력 영역
         bottomBar = {
             CommentInputField(
                 value = newCommentText,
@@ -111,8 +99,6 @@ fun PostDetailScreen(
         },
         containerColor = BoardBackground
     ) { innerPadding ->
-
-        // 게시글 내용 + 댓글을 하나의 스크롤 영역으로 구성
         LazyColumn(
             modifier = Modifier
                 .padding(innerPadding)
@@ -120,13 +106,11 @@ fun PostDetailScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-
-            // 게시글 본문 영역
+            // 게시글 본문
             item {
                 post?.let { PostContent(post = it) }
             }
-
-            // 댓글 개수 표시
+            // 댓글 개수
             item {
                 Text(
                     "댓글 ${comments.size}",
@@ -135,7 +119,6 @@ fun PostDetailScreen(
                     modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
                 )
             }
-
             // 댓글 목록
             items(comments, key = { it.id }) { comment ->
                 CommentItem(comment = comment)
@@ -144,13 +127,7 @@ fun PostDetailScreen(
     }
 }
 
-/**
- * 게시글 상세 화면 상단 앱바
- *
- * - 뒤로가기 버튼
- * - 게시판 제목
- * - 프로필 / 설정 이동 버튼
- */
+// 게시글 상세 화면 상단 앱바
 @Composable
 fun DetailTopAppBar(navController: NavController) {
     Row(
@@ -212,13 +189,7 @@ fun DetailTopAppBar(navController: NavController) {
     }
 }
 
-/**
- * 게시글 본문 영역
- *
- * - 제목, 작성 시간, 모집 상태
- * - 이미지 및 본문 내용
- * - 작성자 정보 표시
- */
+// 게시글 본문
 @Composable
 fun PostContent(post: Post) {
     Column(
@@ -229,8 +200,6 @@ fun PostContent(post: Post) {
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-
-        // 제목 및 작성 시간 영역
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -251,12 +220,9 @@ fun PostContent(post: Post) {
                 color = DetailSubTextColor
             )
         }
-
         // 모집 상태 뱃지
         StatusBadge(status = post.status)
-
         HorizontalDivider(color = Color.Gray.copy(alpha = 0.5f))
-
         // 게시글 이미지 (있을 경우에만 표시)
         post.imageUrl?.let {
             AsyncImage(
@@ -268,12 +234,9 @@ fun PostContent(post: Post) {
                 contentScale = ContentScale.Crop
             )
         }
-
-        // 게시글 본문 텍스트
         Text(post.content, lineHeight = 24.sp)
-
-        // 작성자 정보 영역
         Spacer(modifier = Modifier.height(8.dp))
+        // 작성자 정보
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -296,13 +259,7 @@ fun PostContent(post: Post) {
     }
 }
 
-/**
- * 댓글 하나를 표시하는 Composable
- *
- * - 작성자 정보
- * - 작성 시각
- * - 댓글 내용
- */
+// 댓글 표시
 @Composable
 fun CommentItem(comment: Comment) {
     Column(
@@ -317,7 +274,6 @@ fun CommentItem(comment: Comment) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-
             // 댓글 작성자 정보
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -338,7 +294,6 @@ fun CommentItem(comment: Comment) {
                 }
                 Text(comment.authorName, fontWeight = FontWeight.Bold)
             }
-
             // 댓글 작성 시각
             Text(
                 comment.createdAt?.toFormattedString() ?: "",
@@ -346,9 +301,7 @@ fun CommentItem(comment: Comment) {
                 color = DetailSubTextColor
             )
         }
-
         Spacer(modifier = Modifier.height(8.dp))
-
         // 댓글 내용
         Text(
             comment.content,
@@ -357,12 +310,7 @@ fun CommentItem(comment: Comment) {
     }
 }
 
-/**
- * 댓글 입력 필드
- *
- * - 사용자가 댓글을 입력
- * - 입력 값이 있을 때만 전송 버튼 활성화
- */
+// 댓글 입력 필드
 @Composable
 fun CommentInputField(
     value: String,
@@ -405,18 +353,11 @@ fun CommentInputField(
     }
 }
 
-/**
- * Firebase Timestamp를
- * "MM/dd HH:mm" 형식의 문자열로 변환하는 확장 함수
- */
 fun Timestamp.toFormattedString(): String {
     val sdf = SimpleDateFormat("MM/dd HH:mm", Locale.getDefault())
     return sdf.format(this.toDate())
 }
 
-/**
- * PostDetailScreen 미리보기용 Composable
- */
 @RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable

@@ -32,7 +32,7 @@ class PostDetailViewModel : ViewModel() {
             }
         }
 
-        // 댓글 목록 실시간으로 가져오기 (SnapshotListener는 그대로 사용)
+        // 댓글 목록 실시간으로 가져오기
         db.collection("posts").document(postId).collection("comments")
             .orderBy("createdAt", Query.Direction.ASCENDING)
             .addSnapshotListener { snapshot, e ->
@@ -52,14 +52,14 @@ class PostDetailViewModel : ViewModel() {
         viewModelScope.launch {
             val commentData = hashMapOf(
                 "content" to commentText,
-                "authorName" to "익명", // TODO: 실제 사용자 이름으로 변경
-                "authorId" to "user123", // TODO: 실제 사용자 ID로 변경
+                "authorName" to "익명", // 회원가입 미구현으로 인한 하드코딩
+                "authorId" to "user123", // 회원가입 미구현으로 인한 하드코딩
                 "createdAt" to FieldValue.serverTimestamp()
             )
             try {
                 db.collection("posts").document(postId).collection("comments").add(commentData)
                     .await()
-                // 댓글 수 업데이트 (선택적 기능)
+                // 댓글 수 업데이트
                 db.collection("posts").document(postId)
                     .update("commentCount", FieldValue.increment(1)).await()
             } catch (e: Exception) {

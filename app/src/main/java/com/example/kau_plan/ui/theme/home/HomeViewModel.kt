@@ -23,7 +23,7 @@ class HomeViewModel : ViewModel() {
     private val commonListDocRef = db.collection("todo_lists").document("common_list")
     private val personalListDocRef = db.collection("todo_lists").document("personal_list")
 
-    // UI가 관찰할 상태 변수들 (StateFlow 사용)
+    // UI가 관찰할 상태 변수들 (StateFlow - 현재 상태 적용)
     private val _commonList = MutableStateFlow<List<TodoItem>>(emptyList())
     val commonList = _commonList.asStateFlow()
 
@@ -51,6 +51,7 @@ class HomeViewModel : ViewModel() {
         commonListDocRef.addSnapshotListener { snapshot, e ->
             if (e != null) {
                 Log.w("HomeViewModel", "Listen failed.", e)
+                // 에러시 현재 람다 함수 종료
                 return@addSnapshotListener
             }
             if (snapshot != null && snapshot.exists()) {
@@ -82,6 +83,7 @@ class HomeViewModel : ViewModel() {
 
     // 체크 상태 변경 (Firestore 업데이트)
     fun updateCheckedState(item: TodoItem, isCommon: Boolean) {
+        // 백그라운 처리
         viewModelScope.launch {
             try {
                 val currentList = if (isCommon) _commonList.value else _personalList.value

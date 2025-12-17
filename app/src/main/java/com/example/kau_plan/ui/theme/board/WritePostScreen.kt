@@ -58,20 +58,21 @@ import com.google.firebase.Firebase
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.firestore
 
-// 테두리 색상을 일관되게 관리하기 위해 변수 추가
+// 테두리 색상
 val inputBorderColor = Color.LightGray.copy(alpha = 0.7f)
 
+// 글쓰기 화면
 @Composable
 fun WritePostScreen(navController: NavController) {
     var title by remember { mutableStateOf(TextFieldValue("")) }
     var content by remember { mutableStateOf(TextFieldValue("")) }
     val categories = listOf("헬스", "식사", "공부", "기타")
     var selectedCategory by remember { mutableStateOf(categories.first()) }
-    var selectedStatus by remember { mutableStateOf(PostStatus.RECRUITING) } // 모집 상태 추가
+    var selectedStatus by remember { mutableStateOf(PostStatus.RECRUITING) }
     var isUploading by remember { mutableStateOf(false) }
 
     Scaffold(
-        topBar = { WritePostTopAppBar(navController) }, // NavController 전달
+        topBar = { WritePostTopAppBar(navController) },
         containerColor = BoardBackground
     ) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding)) {
@@ -120,9 +121,10 @@ fun WritePostScreen(navController: NavController) {
                     )
                 }
                 item {
-                    ImageUploader() // 이미지 관련 파라미터 제거
+                    ImageUploader()
                 }
                 item {
+                    // 글 등록 버튼
                     Button(
                         onClick = {
                             if (title.text.isNotBlank() && content.text.isNotBlank() && !isUploading) {
@@ -132,8 +134,8 @@ fun WritePostScreen(navController: NavController) {
                                     "content" to content.text,
                                     "category" to selectedCategory,
                                     "status" to selectedStatus.name, // enum의 이름을 String으로 저장
-                                    "authorId" to "user123", // TODO: 실제 사용자 ID로 교체
-                                    "authorName" to "익명", // TODO: 실제 사용자 이름으로 교체
+                                    "authorId" to "user123", // 회원가입 미구현으로 인한 하드코딩
+                                    "authorName" to "익명", // 회원가입 미구현으로 인한 하드코딩
                                     "createdAt" to FieldValue.serverTimestamp(),
                                     "imageUrl" to null,
                                     "commentCount" to 0
@@ -163,6 +165,7 @@ fun WritePostScreen(navController: NavController) {
     }
 }
 
+// 글쓰기 화면 상단 앱바
 @Composable
 fun WritePostTopAppBar(navController: NavController) {
     Box(
@@ -173,7 +176,6 @@ fun WritePostTopAppBar(navController: NavController) {
             .padding(vertical = 8.dp, horizontal = 4.dp), // 패딩 조정
         contentAlignment = Alignment.Center
     ) {
-        // 뒤로가기 버튼
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -190,6 +192,7 @@ fun WritePostTopAppBar(navController: NavController) {
     }
 }
 
+// 본문 입력
 @Composable
 fun InputSection(
     label: String,
@@ -231,6 +234,7 @@ fun InputSection(
     }
 }
 
+// 카테고리 선택
 @Composable
 fun CategorySelector(
     selectedCategory: String,
@@ -248,7 +252,6 @@ fun CategorySelector(
                 shape = RoundedCornerShape(12.dp),
                 contentPadding = PaddingValues(16.dp),
                 colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White),
-                // 테두리 색상 적용
                 border = ButtonDefaults.outlinedButtonBorder.copy(brush = androidx.compose.ui.graphics.SolidColor(inputBorderColor))
             ) {
                 Row(
@@ -279,6 +282,7 @@ fun CategorySelector(
     }
 }
 
+// 이미지 추가
 @Composable
 fun ImageUploader() {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -288,14 +292,13 @@ fun ImageUploader() {
                 .fillMaxWidth()
                 .height(128.dp)
                 .clip(RoundedCornerShape(12.dp))
-                // 테두리 색상 적용
                 .border(
-                    width = 1.dp, // 테두리 두께 통일
+                    width = 1.dp,
                     color = inputBorderColor,
                     shape = RoundedCornerShape(12.dp)
                 )
-                .background(Color.White) // 배경색 추가
-                .clickable { /* 이미지 선택 로직 (비워둠) */ },
+                .background(Color.White)
+                .clickable { /* 이미지 선택 로직 - 미구현 */ },
             contentAlignment = Alignment.Center
         ) {
             Column(

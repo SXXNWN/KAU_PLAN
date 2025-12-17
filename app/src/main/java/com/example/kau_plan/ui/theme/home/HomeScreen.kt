@@ -71,8 +71,8 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.time.LocalTime
 
-@RequiresApi(Build.VERSION_CODES.O) // API 레벨 경고 해결을 위한 어노테이션 추가
-@Composable
+@RequiresApi(Build.VERSION_CODES.O) // API 레벨 경고 해결을 위한 어노테이션 추가 (API 26 이상)
+@Composable // UI 선언
 fun HomeScreen(
     navController: NavHostController,
     homeViewModel: HomeViewModel = viewModel()
@@ -80,7 +80,7 @@ fun HomeScreen(
     // ViewModel로부터 데이터 상태를 가져옴
     val commonList by homeViewModel.commonList.collectAsState()
     val personalList by homeViewModel.personalList.collectAsState()
-    val progress by homeViewModel.dailyRoutineProgress.collectAsState(initial = 0f)
+    val progress by homeViewModel.dailyRoutineProgress.collectAsState(initial = 0f) // 초기값 0
 
     KauplanHomeScreenTheme {
         Scaffold { innerPadding ->
@@ -113,20 +113,18 @@ fun HomeScreen(
     }
 }
 
-/**
- * 화면 상단의 날짜와 아이콘 버튼이 있는 헤더입니다.
- */
-@RequiresApi(Build.VERSION_CODES.O) // API 레벨 경고 해결을 위한 어노테이션 추가
+// 화면 상단 날짜와 아이콘 버튼 헤더
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HomeHeader(navController: NavHostController) {
-    // 현재 날짜를 가져오는 로직
+    // 날짜 로직
     val currentDate = LocalDate.now()
     val formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.US)
     val formattedDate = currentDate.format(formatter)
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(50)) // 원본 UI의 'rounded-full' 스타일에 맞게 수정
+            .clip(RoundedCornerShape(50))
             .background(MaterialTheme.colorScheme.primaryContainer)
             .padding(horizontal = 20.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -139,6 +137,7 @@ fun HomeHeader(navController: NavHostController) {
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             IconButton(onClick = { navController.navigate("profile") {
+                // 화면 전환 스택 정리
                 popUpTo(navController.graph.findStartDestination().id) {
                     saveState = true
                 }
@@ -148,23 +147,21 @@ fun HomeHeader(navController: NavHostController) {
                 Icon(
                     imageVector = Icons.Default.AccountCircle,
                     contentDescription = "프로필",
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer // onPrimary -> onPrimaryContainer로 수정
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
-            IconButton(onClick = { /* ... */ }, modifier = Modifier.size(24.dp)) {
+            IconButton(onClick = {  }, modifier = Modifier.size(24.dp)) {
                 Icon(
                     imageVector = Icons.Default.Settings,
                     contentDescription = "설정",
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer // onPrimary -> onPrimaryContainer로 수정
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
         }
     }
 }
 
-/**
- * 사용자 프로필과 생활비 현황을 보여주는 카드입니다.
- */
+// 사용자 프로필, 생활비 현황
 @Composable
 fun UserProfileCard() {
     Card(
@@ -197,6 +194,7 @@ fun UserProfileCard() {
                 }
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
+                    // 회원가입 미구현으로 인한 하드코딩
                     Text("정운님", style = MaterialTheme.typography.headlineSmall)
                     Text("250호 멤버", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.outline)
                 }
@@ -226,7 +224,6 @@ fun UserProfileCard() {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // 부제목 색상을 onSurfaceVariant로 변경
                     Text("35% 사용", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
                     Text("잘 절약하는 중이네요! 😊", style = MaterialTheme.typography.bodyMedium)
                 }
@@ -236,13 +233,10 @@ fun UserProfileCard() {
 }
 
 
-/**
- * 하루 루틴 달성률을 원형 프로그레스 바로 보여주는 카드입니다.
- */
-@RequiresApi(Build.VERSION_CODES.O) // API 레벨 경고 해결을 위한 어노테이션 추가
+// 하루 루틴 달성률 원형 프로그레스
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DailyRoutineCard(progress: Float) {
-    // 현재 시간을 가져오는 로직
     val currentTime = LocalTime.now()
     val timeFormatter = DateTimeFormatter.ofPattern("a h시").withLocale(Locale.forLanguageTag("ko"))
     val formattedTime = currentTime.format(timeFormatter)
@@ -272,12 +266,9 @@ fun DailyRoutineCard(progress: Float) {
     }
 }
 
-/**
- * 원형 프로그레스 바를 그리는 Composable
- */
+// 원형 프로그레스 바
 @Composable
 fun CircularProgressBar(percentage: Float, radius: Dp) {
-    // ★ 1. 가로 프로그레스 바와 동일한 트랙 색상 사용
     val trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
     val progressColor = MaterialTheme.colorScheme.tertiary
     val textColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -287,15 +278,15 @@ fun CircularProgressBar(percentage: Float, radius: Dp) {
         modifier = Modifier.size(radius * 2)
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            // 배경 트랙 그리기 (연보라색)
+            // 기본 빈 프로그래스바
             drawArc(
                 color = trackColor,
                 startAngle = -90f,
                 sweepAngle = 360f,
                 useCenter = false,
-                style = Stroke(width = 24f) // 원본 UI와 유사하게 두께 조정
+                style = Stroke(width = 24f)
             )
-            // 진행률 표시 그리기 (노란색)
+            // 진행률
             drawArc(
                 color = progressColor,
                 startAngle = -90f,
@@ -321,9 +312,7 @@ fun CircularProgressBar(percentage: Float, radius: Dp) {
 }
 
 
-/**
- * 공동/개인 리스트를 보여주는 카드입니다.
- */
+// 공동/개인 리스트
 @Composable
 fun TodoListCard(
     commonList: List<TodoItem>,
@@ -331,9 +320,10 @@ fun TodoListCard(
     onItemCheckedChange: (TodoItem, Boolean) -> Unit,
     onSave: (List<TodoItem>, List<TodoItem>) -> Unit
 ) {
+    // 상태 기억을 위한 remember (false로 자동 초기화 방지)
     var isEditMode by remember { mutableStateOf(false) }
 
-    // 수정 모드에서 사용할 임시 상태 변수
+    // 수정하기에서 사용
     var tempCommonList by remember { mutableStateOf(commonList) }
     var tempPersonalList by remember { mutableStateOf(personalList) }
 
@@ -355,6 +345,7 @@ fun TodoListCard(
     ) {
         Column(modifier = Modifier.padding(24.dp)) {
             Row(Modifier.fillMaxWidth()) {
+                // 공동 리스트
                 TodoListSection(
                     title = "공동 리스트",
                     items = if (isEditMode) tempCommonList else commonList,
@@ -372,6 +363,7 @@ fun TodoListCard(
                     modifier = Modifier.weight(1f)
                 )
                 Spacer(modifier = Modifier.width(16.dp))
+                // 개인 리스트
                 TodoListSection(
                     title = "개인 리스트",
                     items = if (isEditMode) tempPersonalList else personalList,
@@ -419,9 +411,7 @@ fun TodoListCard(
     }
 }
 
-/**
- * 하나의 TodoList 섹션을 그립니다.
- */
+// TodoList 섹션
 @Composable
 fun TodoListSection(
     title: String,
@@ -496,8 +486,7 @@ fun TodoListSection(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.clickable {
                         if (!isEditMode) { // 수정 모드가 아닐 때만 체크 가능
-                            // --- 여기가 핵심 수정 부분 ---
-                            // 인덱스가 아닌, 클릭된 'item' 객체 자체를 전달합니다.
+                            // 인덱스가 아닌, 클릭된 item 객체 전달
                             onItemCheckedChange(item)
                         }
                     }
@@ -528,7 +517,7 @@ fun TodoListSection(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O) // API 레벨 경고 해결을 위한 어노테이션 추가
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true, name = "HomeScreen Preview")
 @Composable
 fun HomeScreenPreview() {
