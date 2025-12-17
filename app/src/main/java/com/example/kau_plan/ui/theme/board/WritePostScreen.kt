@@ -211,7 +211,6 @@ fun InputSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = if (singleLine) 56.dp else (56 * (rows / 2)).dp)
-                // 테두리 추가
                 .border(1.dp, inputBorderColor, RoundedCornerShape(12.dp)),
             shape = RoundedCornerShape(12.dp),
             colors = TextFieldDefaults.colors(
